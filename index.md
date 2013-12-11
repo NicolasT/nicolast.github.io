@@ -1,7 +1,7 @@
 ---
 layout: home
-description: "A responsive Jekyll theme with editorial tendencies by designer Michael Rose."
-tags: [Jekyll, theme, responsive, blog, template]
+description: "Articles by Nicolas Trangez."
+tags: [blog, haskell, ocaml, programming, python]
 image:
   feature: texture-feature-01.jpg
   credit: Texture Lovers
