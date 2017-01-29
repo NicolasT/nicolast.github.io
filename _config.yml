@@ -7,13 +7,13 @@
 
 # Site Settings
 locale                   : "en"
-title                    : "Site Title"
-title_separator          : "-"
-name                     : "Your Name"
-description              : "An amazing website."
-url                      : # the base hostname & protocol for your site e.g. "https://mmistakes.github.io"
+title                    : "nicolast.be"
+title_separator          : "|"
+name                     : "Nicolas Trangez"
+description              : "My blog."
+url                      : "https://nicolast.be"
 baseurl                  : # the subpath of your site, e.g. "/blog"
-repository               : # GitHub username/repo-name e.g. "mmistakes/minimal-mistakes"
+repository               : "NicolasT/nicolast.github.io"
 teaser                   : # path of fallback teaser image, e.g. "/assets/images/500x300.png"
 # breadcrumbs            : false # true, false (default)
 words_per_minute         : 200
@@ -55,7 +55,7 @@ yandex_site_verification :
 
 # Social Sharing
 twitter:
-  username               :
+  username               : "eikke"
 facebook:
   username               :
   app_id                 :
@@ -77,11 +77,11 @@ analytics:
 
 # Site Author
 author:
-  name             : "Your Name"
-  avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
-  bio              : "I am an amazing person."
-  location         : "Somewhere"
-  email            :
+  name             : "Nicolas T."
+  avatar           : "/assets/images/avatar-nicolas.jpg" # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
+  bio              : "Software guy, Architect @ <a href='http://scality.com'>Scality</a>. <a href='http://haskell.org'>Haskell</a>'ist, music-lover and startup-minded."
+  location         : "🇫🇷 Paris | 🇧🇪 Gent"
+  email            : "ikke@nicolast.be"
   uri              :
   bitbucket        :
   codepen          :
@@ -89,18 +89,18 @@ author:
   flickr           :
   facebook         :
   foursquare       :
-  github           :
+  github           : "NicolasT"
   google_plus      :
   keybase          :
   instagram        :
-  lastfm           :
-  linkedin         :
+  lastfm           : "eikke"
+  linkedin         : "nicolastrangez"
   pinterest        :
   soundcloud       :
-  stackoverflow    : # "123456/username" (the last part of your profile url, e.g. http://stackoverflow.com/users/123456/username)
+  stackoverflow    : "1285443/nicolas-trangez"
   steam            :
   tumblr           :
-  twitter          :
+  twitter          : "eikke"
   vine             :
   weibo            :
   xing             :
