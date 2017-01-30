@@ -1,0 +1,9 @@
+---
+---
+# www.robotstxt.org/
+# www.google.com/support/webmasters/bin/answer.py?hl=en&answer=156449
+User-agent: *
+{% for node in site.pages %}{% if node.noindex %}{% assign isset = true %}Disallow: {{ node.url }}
+{% endif %}{% endfor %}{% if isset != true %}Disallow:
+{% endif %}
+Sitemap: {{ site.url }}/sitemap.xml
