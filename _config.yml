@@ -8,7 +8,7 @@
 # Site Settings
 locale                   : "en"
 title                    : "nicolast.be"
-title_separator          : "|"
+title_separator          : "&raquo;"
 name                     : "Nicolas Trangez"
 description              : "My blog."
 url                      : "https://nicolast.be"
@@ -55,18 +55,19 @@ yandex_site_verification :
 
 # Social Sharing
 twitter:
-  username               : "eikke"
+  username               : &twitter "eikke"
 facebook:
   username               :
   app_id                 :
   publisher              :
-og_image                 : # Open Graph/Twitter default site image
+og_image                 : &avatar-nicolas "/assets/images/avatar-nicolas.jpg" # Open Graph/Twitter default site image
 # For specifying social profiles
 # - https://developers.google.com/structured-data/customize/social-profiles
 social:
   type                   : # Person or Organization (defaults to Person)
   name                   : # If the user or organization name differs from the site's name
   links: # An array of links to social media profiles
+    - "https://twitter.com/eikke"
 
 # Analytics
 analytics:
@@ -78,7 +79,7 @@ analytics:
 # Site Author
 author:
   name             : "Nicolas T."
-  avatar           : "/assets/images/avatar-nicolas.jpg" # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
+  avatar           : *avatar-nicolas # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
   bio              : "Software guy, Architect @ <a href='http://scality.com'>Scality</a>. <a href='http://haskell.org'>Haskell</a>'ist, music-lover and startup-minded."
   location         : "🇫🇷 Paris | 🇧🇪 Gent"
   email            : "ikke@nicolast.be"
@@ -100,7 +101,7 @@ author:
   stackoverflow    : "1285443/nicolas-trangez"
   steam            :
   tumblr           :
-  twitter          : "eikke"
+  twitter          : *twitter
   vine             :
   weibo            :
   xing             :
@@ -174,7 +175,7 @@ sass:
 permalink: /:categories/:title/
 paginate: 5 # amount of posts to show
 paginate_path: /page:num/
-timezone: # http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+timezone: Europe/Brussels # http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 
 # Plugins
