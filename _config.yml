@@ -86,7 +86,7 @@ author:
   name             : "Nicolas T."
   avatar           : *avatar-nicolas # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
   bio              : "Software guy, Architect @ <a href='http://scality.com'>Scality</a>. <a href='http://haskell.org'>Haskell</a>'ist, music-lover and startup-minded."
-  location         : "🇫🇷 Paris | 🇧🇪 Gent"
+  location         : "🇫🇷 Paris | 🇧🇪 Antwerp"
   email            : "ikke@nicolast.be"
   github           : "NicolasT"
   lastfm           : "eikke"
