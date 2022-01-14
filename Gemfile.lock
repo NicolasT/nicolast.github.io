@@ -132,7 +132,6 @@ DEPENDENCIES
   html-proofer
   jekyll (~> 4.2)
   jekyll-feed
-  jekyll-gist
   jekyll-include-cache
   jekyll-paginate
   jekyll-sitemap
