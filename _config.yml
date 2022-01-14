@@ -56,7 +56,7 @@ plugins:
   - jekyll-sitemap
   - jekyll-feed
   - jekyll-include-cache
-
+  - jekyll-data
 
 # SEO Related
 google_site_verification : "7SXobc1ltJXe4Xqy_ZBZJEVc1sWPi03lIkaHIXCiNqc"
