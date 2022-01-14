@@ -130,7 +130,13 @@ PLATFORMS
 
 DEPENDENCIES
   html-proofer
-  minimal-mistakes-jekyll
+  jekyll (~> 4.2)
+  jekyll-feed
+  jekyll-gist
+  jekyll-include-cache
+  jekyll-paginate
+  jekyll-sitemap
+  minimal-mistakes-jekyll (~> 4.24)
   webrick (~> 1.7)
 
 BUNDLED WITH
