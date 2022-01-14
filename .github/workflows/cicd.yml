@@ -1,0 +1,36 @@
+---
+name: Build and deploy the website
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  github-pages:
+    name: Build and deploy on GitHub Pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v2.4.0
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1.92.0
+        with:
+          ruby-version: 2.7
+          bundler-cache: true
+      - name: Build the website using Jekyll
+        run: |
+            bundle exec \
+                jekyll build \
+                --verbose \
+                --strict_front_matter
+        env:
+          JEKYLL_ENV: production
+          JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload the website to the 'gh-pages' branch
+        uses: peaceiris/actions-gh-pages@v3.8.0
+        if: ${{ github.ref == 'refs/heads/master' }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
