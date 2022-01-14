@@ -28,6 +28,15 @@ jobs:
         env:
           JEKYLL_ENV: production
           JEKYLL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check website links using htmlproofer
+        run: |
+            bundle exec \
+                htmlproofer \
+                    --allow-hash-href \
+                    --check-favicon \
+                    --check-opengraph \
+                    --http-status-ignore "999" \
+                    _site
       - name: Upload the website to the 'gh-pages' branch
         uses: peaceiris/actions-gh-pages@v3.8.0
         if: ${{ github.ref == 'refs/heads/master' }}
