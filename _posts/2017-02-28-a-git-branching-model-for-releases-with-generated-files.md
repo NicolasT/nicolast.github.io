@@ -194,5 +194,5 @@ Git, e.g. as part of a CI pipeline, is of course good practice!
 Finally, this approach interacts nicely with the [GitWaterFlow] branching model
 we presented at [RELENG'16], but more about that later!
 
-[GitWaterFlow]: http://www.scality.com/blog/continuous-integration-faster-releases-high-quality/
+[GitWaterFlow]: https://web.archive.org/web/20170707112140/http://www.scality.com/blog/continuous-integration-faster-releases-high-quality/
 [RELENG'16]: http://releng.polymtl.ca/RELENG2016/html/index.html
