@@ -15,7 +15,7 @@ jobs:
       - name: Check out sources
         uses: actions/checkout@v3.0.2
       - name: Set up Ruby
-        uses: ruby/setup-ruby@v1.111.0
+        uses: ruby/setup-ruby@v1.113.2
         with:
           ruby-version: 3.0
           bundler-cache: true
