@@ -25,6 +25,7 @@ twitter_username: eikke
 github_username: NicolasT
 minimal_mistakes_skin: default
 search: false
+timezone: Etc/UTC
 
 # Build settings
 markdown: kramdown
