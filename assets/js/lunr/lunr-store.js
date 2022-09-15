@@ -10,4 +10,10 @@ var store = [{
         "tags": [],
         "url": "/development/a-git-branching-model-for-releases-with-generated-files/",
         "teaser": null
+      },{
+        "title": "xinU, a Haskell Experiment",
+        "excerpt":"Even though Haskell is considered to be a high-level programming language, it’s a good fit for various system-level applications and services as well, similar to how Go is used for many applications. A lot of functionality can be implemented in high-level user-space libraries, but at some point we must interact...","categories": ["Development"],
+        "tags": [],
+        "url": "/development/xinu-a-haskell-experiment/",
+        "teaser": null
       }]
