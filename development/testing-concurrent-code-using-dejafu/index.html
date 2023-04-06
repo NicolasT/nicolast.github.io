@@ -1,4 +1,375 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://nicolast.be/feed.xml" rel="self" type="application/atom+xml" /><link href="https://nicolast.be/" rel="alternate" type="text/html" /><updated>2023-04-06T21:18:54+02:00</updated><id>https://nicolast.be/feed.xml</id><title type="html">nicolast.be</title><subtitle>My blog.</subtitle><author><name>Nicolas T.</name><email>ikke@nicolast.be</email></author><entry><title type="html">Testing concurrent code using DejaFu</title><link href="https://nicolast.be/development/testing-concurrent-code-using-dejafu/" rel="alternate" type="text/html" title="Testing concurrent code using DejaFu" /><published>2023-04-06T21:17:00+02:00</published><updated>2023-04-06T21:17:00+02:00</updated><id>https://nicolast.be/development/testing-concurrent-code-using-dejafu</id><content type="html" xml:base="https://nicolast.be/development/testing-concurrent-code-using-dejafu/"><![CDATA[<p>Recently I was working on some code using <a href="https://www.haskell.org/ghc/">GHC</a>
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.24.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Testing concurrent code using DejaFu » nicolast.be</title>
+<meta name="description" content="Writing correct concurrent code with shared mutable state is hard. Testing concurrent code with shared mutable state is hard. In Haskell, we can use STM to transactionally change state, and DejaFu to test concurrent code. In this post, we look into how this is done, and discuss an approach to simplify the testing effort.">
+
+
+  <meta name="author" content="Nicolas T.">
+  
+  <meta property="article:author" content="Nicolas T.">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en">
+<meta property="og:site_name" content="nicolast.be">
+<meta property="og:title" content="Testing concurrent code using DejaFu">
+<meta property="og:url" content="https://nicolast.be/development/testing-concurrent-code-using-dejafu/">
+
+
+  <meta property="og:description" content="Writing correct concurrent code with shared mutable state is hard. Testing concurrent code with shared mutable state is hard. In Haskell, we can use STM to transactionally change state, and DejaFu to test concurrent code. In this post, we look into how this is done, and discuss an approach to simplify the testing effort.">
+
+
+
+  <meta property="og:image" content="https://nicolast.be/assets/images/27174457817_7b6cc225e4_c.jpg">
+
+
+
+  <meta name="twitter:site" content="@eikke">
+  <meta name="twitter:title" content="Testing concurrent code using DejaFu">
+  <meta name="twitter:description" content="Writing correct concurrent code with shared mutable state is hard. Testing concurrent code with shared mutable state is hard. In Haskell, we can use STM to transactionally change state, and DejaFu to test concurrent code. In this post, we look into how this is done, and discuss an approach to simplify the testing effort.">
+  <meta name="twitter:url" content="https://nicolast.be/development/testing-concurrent-code-using-dejafu/">
+
+  
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://nicolast.be/assets/images/27174457817_7b6cc225e4_c.jpg">
+  
+
+  
+    <meta name="twitter:creator" content="@eikke">
+  
+
+
+
+  <meta property="article:published_time" content="2023-04-06T21:17:00+02:00">
+
+
+
+
+
+
+<link rel="canonical" href="https://nicolast.be/development/testing-concurrent-code-using-dejafu/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Nicolas Trangez",
+      "url": "https://nicolast.be/",
+      "sameAs": ["https://twitter.com/eikke"]
+    
+  }
+</script>
+
+
+  <meta name="google-site-verification" content="7SXobc1ltJXe4Xqy_ZBZJEVc1sWPi03lIkaHIXCiNqc" />
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="nicolast.be Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css"></noscript>
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use http://realfavicongenerator.net/ -->
+<link rel="apple-touch-icon" sizes="76x76" href="/assets/images/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/assets/images/favicon/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/assets/images/favicon/favicon-16x16.png" sizes="16x16">
+<link rel="manifest" href="/assets/images/favicon/manifest.json">
+<link rel="mask-icon" href="/assets/images/favicon/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="shortcut icon" href="/assets/images/favicon/favicon.ico">
+<meta name="msapplication-config" content="/assets/images/favicon/browserconfig.xml">
+<meta name="theme-color" content="#ffffff">
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          nicolast.be
+          
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/categories/">Categories</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/assets/images/27174457817_7b6cc225e4_c.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Testing concurrent code using DejaFu
+
+        
+      </h1>
+      
+        <p class="page__lead">Writing correct concurrent code with shared mutable state is hard. Testing concurrent code with shared mutable state is hard. In Haskell, we can use STM to transactionally change state, and DejaFu to test concurrent code. In this post, we look into how this is done, and discuss an approach to simplify the testing effort.
+</p>
+      
+      
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+      
+      
+    </div>
+  
+  
+    <span class="page__hero-caption">Photo credit: <a href="https://www.flickr.com/photos/157270154@N05/27174457817"><strong>Mike Lawrence</strong></a>
+</span>
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/images/avatar-nicolas.jpg" alt="Nicolas T." itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Nicolas T.</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Software guy, former Principal Architect @ Scality. <a href="http://haskell.org">Haskell</a>‘ist, music-lover and startup-minded.</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">🇫🇷 Paris | 🇧🇪 Antwerp</span>
+        </li>
+      
+
+      
+
+      
+
+      
+        <li>
+          <a href="mailto:ikke@nicolast.be">
+            <meta itemprop="email" content="ikke@nicolast.be" />
+            <i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+        <li>
+          <a href="https://twitter.com/eikke" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+        <li>
+          <a href="https://www.linkedin.com/in/nicolastrangez" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span class="label">LinkedIn</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+        <li>
+          <a href="https://github.com/NicolasT" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+        <li>
+          <a href="https://stackoverflow.com/users/1285443/nicolas-trangez" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-stack-overflow" aria-hidden="true"></i><span class="label">Stack Overflow</span>
+          </a>
+        </li>
+      
+
+      
+        <li>
+          <a href="https://last.fm/user/eikke" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-lastfm-square" aria-hidden="true"></i><span class="label">Last.fm</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Testing concurrent code using DejaFu">
+    <meta itemprop="description" content="Writing correct concurrent code with shared mutable state is hard. Testing concurrent code with shared mutable state is hard. In Haskell, we can use STM to transactionally change state, and DejaFu to test concurrent code. In this post, we look into how this is done, and discuss an approach to simplify the testing effort.">
+    <meta itemprop="datePublished" content="2023-04-06T21:17:00+02:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <p>Recently I was working on some code using <a href="https://www.haskell.org/ghc/">GHC</a>
 <a href="https://www.haskell.org">Haskell</a>’s <a href="https://hackage.haskell.org/package/stm">STM</a> (short for
 Software Transactional Memory)
 functionality. STM gives a programmer mutable variables (so-called <code class="language-plaintext highlighter-rouge">TVar</code>s), functions to work on such
@@ -408,423 +779,259 @@ is <code class="language-plaintext highlighter-rouge">INLINEABLE</code> and/or <
 there’s, ideally, no performance hit for <em>regular application</em> consumers of the
 library vs. using plain <code class="language-plaintext highlighter-rouge">STM</code> and <code class="language-plaintext highlighter-rouge">IO</code> in the library code.</p>
   </li>
-</ul>]]></content><author><name>Nicolas T.</name><email>ikke@nicolast.be</email></author><category term="Development" /><summary type="html"><![CDATA[Writing correct concurrent code with shared mutable state is hard. Testing concurrent code with shared mutable state is hard. In Haskell, we can use STM to transactionally change state, and DejaFu to test concurrent code. In this post, we look into how this is done, and discuss an approach to simplify the testing effort.]]></summary></entry><entry><title type="html">xinU, a Haskell Experiment</title><link href="https://nicolast.be/development/xinu-a-haskell-experiment/" rel="alternate" type="text/html" title="xinU, a Haskell Experiment" /><published>2022-09-16T01:01:00+02:00</published><updated>2022-09-16T01:01:00+02:00</updated><id>https://nicolast.be/development/xinu-a-haskell-experiment</id><content type="html" xml:base="https://nicolast.be/development/xinu-a-haskell-experiment/"><![CDATA[<p>Even though <a href="https://www.haskell.org">Haskell</a> is considered to be a high-level
-programming language, it’s a good fit for various system-level applications and
-services as well, similar to how <a href="https://go.dev">Go</a> is used for many
-applications.</p>
-
-<p>A lot of functionality can be implemented in high-level user-space libraries,
-but at some point we must interact with the system and its kernel through
-<em><a href="https://en.wikipedia.org/wiki/System_call">syscalls</a></em>. In the
-<a href="https://www.haskell.org/ghc/">GHC</a> Haskell ecosystem, we use the wrappers
-provided by the system C library instead of directly calling into the kernel,
-which doesn’t take a lot of effort thanks to GHC’s excellent <a href="https://wiki.haskell.org/Foreign_Function_Interface">Foreign Function
-Interface</a> support.
-Exposing the</p>
-<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span> <span class="n">openat</span><span class="p">(</span><span class="kt">int</span> <span class="n">dirfd</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pathname</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">)</span>
-</code></pre></div></div>
-<p>function from <em>libc</em> to Haskell code is as simple as</p>
-
-<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">foreign</span> <span class="kr">import</span> <span class="nn">capi</span> <span class="n">safe</span> <span class="s">"fcntl.h openat"</span>
-    <span class="n">c_openat</span> <span class="o">::</span> <span class="kt">CInt</span> <span class="o">-&gt;</span> <span class="kt">CString</span> <span class="o">-&gt;</span> <span class="kt">CInt</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="kt">CInt</span>
-</code></pre></div></div>
-
-<p>Now Haskell code can call <code class="language-plaintext highlighter-rouge">c_openat</code> to open a file.</p>
-
-<p>The above code is, however, a bit too low-level for most practical purposes:</p>
-
-<ul>
-  <li>When <code class="language-plaintext highlighter-rouge">openat</code> fails, it returns <code class="language-plaintext highlighter-rouge">-1</code> and <code class="language-plaintext highlighter-rouge">errno</code> is set. Checking whether the
-return value of the <code class="language-plaintext highlighter-rouge">c_openat</code> action is <code class="language-plaintext highlighter-rouge">-1</code> is not very Haskell’esque: this
-is where we expect an exception to be thrown.</li>
-  <li>The
-<a href="https://hackage.haskell.org/package/base-4.17.0.0/docs/Foreign-C-Types.html#t:CInt"><code class="language-plaintext highlighter-rouge">CInt</code></a>
-type is very generic. Instead, we’d like to use a type specific to
-file-descriptors, so a corresponding <code class="language-plaintext highlighter-rouge">read</code>, <code class="language-plaintext highlighter-rouge">write</code> or <code class="language-plaintext highlighter-rouge">close</code> action will
-take such type as an argument, not any arbitrary <code class="language-plaintext highlighter-rouge">CInt</code>.</li>
-  <li><code class="language-plaintext highlighter-rouge">c_openat</code> takes a
-<a href="https://hackage.haskell.org/package/base-4.17.0.0/docs/Foreign-C-String.html#t:CString"><code class="language-plaintext highlighter-rouge">CString</code></a>
-argument, which is a <code class="language-plaintext highlighter-rouge">Ptr CChar</code>. In high-level code, this is not a type we
-regularly work with. An API using a less clumsy path type would be welcome.</li>
 </ul>
 
-<p>Luckily, there’s a popular library in the ecosystem which provides just that:
-<a href="https://hackage.haskell.org/package/unix"><code class="language-plaintext highlighter-rouge">unix</code></a>. In its
-<a href="https://hackage.haskell.org/package/unix-2.8.0.0/docs/System-Posix-IO.html"><code class="language-plaintext highlighter-rouge">System.Posix.IO</code></a>
-module, it provides</p>
+        
+      </section>
 
-<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">openFdAt</span> <span class="o">::</span> <span class="kt">Maybe</span> <span class="kt">Fd</span> <span class="o">-&gt;</span> <span class="kt">FilePath</span> <span class="o">-&gt;</span> <span class="kt">OpenMode</span> <span class="o">-&gt;</span> <span class="kt">OpenFileFlags</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="kt">Fd</span>
-</code></pre></div></div>
+      <footer class="page__meta">
+        
+        
 
-<p>which is a wrapper around <code class="language-plaintext highlighter-rouge">c_openat</code>. It’s using the <a href="https://hackage.haskell.org/package/base-4.14.1.0/docs/System-Posix-Types.html#t:Fd"><code class="language-plaintext highlighter-rouge">Fd</code></a>
-type where applicable, it will throw an <a href="https://hackage.haskell.org/package/base-4.17.0.0/docs/Prelude.html#t:IOError"><code class="language-plaintext highlighter-rouge">IOError</code></a>
-when the call fails using handy utility functions like</p>
-<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">Foreign</span><span class="o">.</span><span class="kt">C</span><span class="o">.</span><span class="kt">Error</span><span class="o">.</span><span class="n">throwErrnoIfMinus1</span> <span class="o">::</span> <span class="p">(</span><span class="kt">Eq</span> <span class="n">a</span><span class="p">,</span> <span class="kt">Num</span> <span class="n">a</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="n">a</span>
-</code></pre></div></div>
-<p>and takes a
-<a href="https://hackage.haskell.org/package/base-4.17.0.0/docs/Prelude.html#t:FilePath"><code class="language-plaintext highlighter-rouge">FilePath</code></a> (a.k.a. <code class="language-plaintext highlighter-rouge">String</code>) as argument, internally turning this into a
-<code class="language-plaintext highlighter-rouge">CString</code> for the lifetime of the call to <code class="language-plaintext highlighter-rouge">c_openat</code> using</p>
-<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">Foreign</span><span class="o">.</span><span class="kt">C</span><span class="o">.</span><span class="kt">String</span><span class="o">.</span><span class="n">withCString</span> <span class="o">::</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="kt">CString</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="n">a</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="n">a</span>
-</code></pre></div></div>
 
-<h2 id="some-problems-with-unix">Some problems with <code class="language-plaintext highlighter-rouge">unix</code></h2>
-<p>The <code class="language-plaintext highlighter-rouge">unix</code> package has been serving the Haskell ecosystem well for many years
-(and, without a doubt, for many years to come). However, it’s not without its
-shortcomings:</p>
+  
 
-<ul>
-  <li>The <code class="language-plaintext highlighter-rouge">FilePath</code> type (as used in, e.g., the <code class="language-plaintext highlighter-rouge">System.Posix.IO</code> module) being a
-<code class="language-plaintext highlighter-rouge">String</code> comes with performance implications. Hence, the <code class="language-plaintext highlighter-rouge">System.Posix.IO</code>
-module was cloned into
-<a href="https://hackage.haskell.org/package/unix-2.8.0.0/docs/System-Posix-IO-ByteString.html"><code class="language-plaintext highlighter-rouge">System.Posix.IO.ByteString</code></a>
-and reworked to use <code class="language-plaintext highlighter-rouge">ByteString</code> values as paths. This duplication requires
-certain code changes to be applied in multiple modules.</li>
-  <li>Neither <code class="language-plaintext highlighter-rouge">FilePath</code> nor <code class="language-plaintext highlighter-rouge">ByteString</code> are suitable types for paths, because of
-encoding issues. Hence, new clones of applicable modules were created now
-using
-<a href="https://hackage.haskell.org/package/unix-2.8.0.0/docs/System-Posix-PosixString.html#t:PosixPath"><code class="language-plaintext highlighter-rouge">PosixPath</code></a>
-values (e.g., <code class="language-plaintext highlighter-rouge">System.Posix.IO.PosixString</code>), further increasing
-code-duplication.</li>
-  <li>The <code class="language-plaintext highlighter-rouge">unix</code> library exposes functions that are not necessarily available on all
-supported platforms, e.g., the
-<a href="https://webassembly.org/">WASM</a>/<a href="https://wasi.dev/">WASI</a> platform lacks
-some. Availability of library functions is checked using a <code class="language-plaintext highlighter-rouge">configure</code> script
-at build time, but when some library function is not found, the corresponding
-binding in <code class="language-plaintext highlighter-rouge">unix</code> is implemented, unconditionally, as
-    <div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ioError</span> <span class="p">(</span><span class="n">ioeSetLocation</span> <span class="n">unsupportedOperation</span> <span class="s">"..."</span><span class="p">)</span>
-</code></pre></div>    </div>
-    <p>This breaks the “If it compiles, it works” mantra, since any call to the
-function will most definitely not work.</p>
-  </li>
-  <li><code class="language-plaintext highlighter-rouge">unix</code> provides somewhat-high-level access the system functions, though one
-can argue the wrappers are, sometimes, too high-level, and lower-level
-interfaces are not made available. As an example, the <code class="language-plaintext highlighter-rouge">openAt</code> call above
-takes an <a href="https://hackage.haskell.org/package/unix-2.8.0.0/docs/System-Posix-IO.html#t:OpenFileFlags"><code class="language-plaintext highlighter-rouge">OpenFileFlags</code></a>
-argument which is a structure whose fields are mapped to bits in the <code class="language-plaintext highlighter-rouge">flags</code>
-argument of <code class="language-plaintext highlighter-rouge">openat</code>. However, if one want to use a <em>flag</em> that’s not
-available in <code class="language-plaintext highlighter-rouge">OpenFileFlags</code> (say, <code class="language-plaintext highlighter-rouge">O_PATH</code> on a Linux system), this is not
-possible. This forced me to implement another <a href="https://github.com/NicolasT/landlock-hs/blob/b5638684869ad4f85bea53f10a3f0b921f000202/landlock/internal/System/Landlock/OpenPath.hsc">set of bindings for
-<code class="language-plaintext highlighter-rouge">openat</code></a>
-in <a href="https://github.com/NicolasT/landlock-hs"><code class="language-plaintext highlighter-rouge">landlock-hs</code></a>: not a lot of
-effort, but duplication nonetheless.</li>
-  <li>Most system functions are effectful (that’s why they exist in the first
-place), so a big part of the <code class="language-plaintext highlighter-rouge">unix</code> API lives in <code class="language-plaintext highlighter-rouge">IO</code>. When working with monad
-stacks layered on top of <code class="language-plaintext highlighter-rouge">IO</code>, this requires a lot of <code class="language-plaintext highlighter-rouge">liftIO</code>ing.</li>
-</ul>
 
-<h2 id="the-xinu-experiment">The <code class="language-plaintext highlighter-rouge">xinu</code> experiment</h2>
-<p>To experiment with alternative implementation strategies to expose system
-functions to Haskell code, I created the <a href="https://github.com/NicolasT/xinu"><code class="language-plaintext highlighter-rouge">xinu</code></a>
-package. Actually, two packages:</p>
+  
 
-<ul>
-  <li>
-    <p><code class="language-plaintext highlighter-rouge">xinu-ffi</code>, which exposes FFI bindings to library functions, using a
-<code class="language-plaintext highlighter-rouge">configure</code> script to detect system capabilities. If a library function is not
-found at <code class="language-plaintext highlighter-rouge">configure</code> time, <code class="language-plaintext highlighter-rouge">xinu-ffi</code> will not provide a binding to it. Hence,
-the library API can depend on the build environment. However, a <code class="language-plaintext highlighter-rouge">xinu-ffi.h</code>
-header file is installed so dependent package can detect availability of
-functions using the <code class="language-plaintext highlighter-rouge">CPP</code> language extension.</p>
-  </li>
-  <li>
-    <p><code class="language-plaintext highlighter-rouge">xinu</code>, and a couple of internal libraries, which expose higher-level APIs to
-a developer.</p>
-  </li>
-</ul>
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#development" class="page__taxonomy-item" rel="tag">Development</a>
+    
+    </span>
+  </p>
 
-<p>The <code class="language-plaintext highlighter-rouge">xinu</code> library, similar to <code class="language-plaintext highlighter-rouge">unix</code>, supports multiple path types. However,
-unlike <code class="language-plaintext highlighter-rouge">unix</code>, this is not implemented by copying the modules. Instead, it
-leverages GHC’s
-<a href="https://gitlab.haskell.org/ghc/ghc/-/wikis/backpack"><em>Backpack</em></a> feature,
-which brings ML module functor-like functionality to Haskell. Basically,
-Backpack allows us to write code, abstracted over a module for which we only
-provide the signature (i.e., the types and functions it must expose). Then, at
-build time, we can specify one or more implementations of this signature and
-create instanciations of the abstract module. Hence, without any code
-duplication, there’s <code class="language-plaintext highlighter-rouge">System.Xinu.IO.FilePath</code> and <code class="language-plaintext highlighter-rouge">System.Xinu.IO.ByteString</code>,
-both instanciations of <code class="language-plaintext highlighter-rouge">System.Xinu.IO.Abstract</code> (over
-<code class="language-plaintext highlighter-rouge">System.Xinu.Path.FilePath</code> and <code class="language-plaintext highlighter-rouge">System.Xinu.Path.ByteString</code>). The latter are
-two modules implementing a rather simple signature:</p>
 
-<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">signature</span> <span class="kt">System</span><span class="o">.</span><span class="kt">Xinu</span><span class="o">.</span><span class="kt">Path</span> <span class="p">(</span>
-      <span class="kt">Path</span>
-    <span class="p">,</span> <span class="n">toString</span>
-    <span class="p">,</span> <span class="n">withPath</span>
-    <span class="p">)</span> <span class="kr">where</span>
+        
 
-<span class="kr">import</span> <span class="nn">Control.Monad.Catch</span> <span class="p">(</span><span class="kt">MonadMask</span><span class="p">)</span>
-<span class="kr">import</span> <span class="nn">Control.Monad.IO.Class</span> <span class="p">(</span><span class="kt">MonadIO</span><span class="p">)</span>
-<span class="kr">import</span> <span class="nn">Foreign.C.String</span> <span class="p">(</span><span class="kt">CString</span><span class="p">)</span>
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2023-04-06T21:17:00+02:00">April 6, 2023</time></p>
 
-<span class="kr">data</span> <span class="kt">Path</span>
 
-<span class="c1">-- Execute an action, passing the given Path as a CString.</span>
-<span class="n">withPath</span> <span class="o">::</span> <span class="p">(</span><span class="kt">MonadIO</span> <span class="n">m</span><span class="p">,</span> <span class="kt">MonadMask</span> <span class="n">m</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="kt">CString</span> <span class="o">-&gt;</span> <span class="n">m</span> <span class="n">a</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">m</span> <span class="n">a</span>
+      </footer>
 
-<span class="c1">-- Used for error reporting.</span>
-<span class="n">toString</span> <span class="o">::</span> <span class="kt">Path</span> <span class="o">-&gt;</span> <span class="kt">String</span>
-</code></pre></div></div>
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
 
-<p>Unlike the <code class="language-plaintext highlighter-rouge">unix</code> library <code class="language-plaintext highlighter-rouge">xinu</code> will expose a different API depending on
-library function availability of the build environment (based on findings of
-<code class="language-plaintext highlighter-rouge">xinu-ffi</code>’s <code class="language-plaintext highlighter-rouge">configure</code> script). Similar to <code class="language-plaintext highlighter-rouge">xinu-ffi</code>, it provides a <code class="language-plaintext highlighter-rouge">xinu.h</code>
-header file, so dependents who care about availability of functions (e.g., to
-provide different implementations based on what’s available) can use <code class="language-plaintext highlighter-rouge">CPP</code>.</p>
+  <a href="https://twitter.com/intent/tweet?via=eikke&text=Testing+concurrent+code+using+DejaFu%20https%3A%2F%2Fnicolast.be%2Fdevelopment%2Ftesting-concurrent-code-using-dejafu%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
 
-<p>Finally, <code class="language-plaintext highlighter-rouge">xinu</code> functions aren’t <code class="language-plaintext highlighter-rouge">IO</code> (though they’re <code class="language-plaintext highlighter-rouge">SPECIALIZE</code>d for it).
-Instead, it relies on the <code class="language-plaintext highlighter-rouge">MonadIO</code> type-class to <code class="language-plaintext highlighter-rouge">liftIO</code> <code class="language-plaintext highlighter-rouge">xinu-ffi</code> functions
-where necessary. Furthermore, errors are reported and (where applicable) safely
-handled using the <code class="language-plaintext highlighter-rouge">MonadThrow</code> and <code class="language-plaintext highlighter-rouge">MonadMask</code> type-classes from the
-<a href="https://hackage.haskell.org/package/exceptions"><code class="language-plaintext highlighter-rouge">exceptions</code></a> package. This
-allows <code class="language-plaintext highlighter-rouge">xinu</code> functions to be used within arbitrary monad stacks (assuming an
-instance of <code class="language-plaintext highlighter-rouge">MonadIO</code> and <code class="language-plaintext highlighter-rouge">MonadThrow</code>/<code class="language-plaintext highlighter-rouge">MonadMask</code> is present).</p>
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fnicolast.be%2Fdevelopment%2Ftesting-concurrent-code-using-dejafu%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
 
-<p>So, <code class="language-plaintext highlighter-rouge">xinu-ffi</code> exposes</p>
-<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">System</span><span class="o">.</span><span class="kt">Xinu</span><span class="o">.</span><span class="kt">IO</span><span class="o">.</span><span class="kt">FFI</span><span class="o">.</span><span class="n">c_openat</span> <span class="o">::</span> <span class="kt">Int32</span> <span class="o">-&gt;</span> <span class="kt">CString</span> <span class="o">-&gt;</span> <span class="kt">Int32</span> <span class="o">-&gt;</span> <span class="kt">Word32</span> <span class="o">-&gt;</span> <span class="kt">IO</span> <span class="kt">Int32</span>
-</code></pre></div></div>
-<p>while <code class="language-plaintext highlighter-rouge">xinu</code> exposes, among others,</p>
-<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">System</span><span class="o">.</span><span class="kt">Xinu</span><span class="o">.</span><span class="kt">IO</span><span class="o">.</span><span class="kt">FilePath</span><span class="o">.</span><span class="n">openat</span> <span class="o">::</span> <span class="p">(</span><span class="kt">MonadIO</span> <span class="n">m</span><span class="p">,</span> <span class="kt">MonadMask</span> <span class="n">m</span><span class="p">)</span>
-                               <span class="o">=&gt;</span> <span class="kt">Maybe</span> <span class="kt">Int32</span>
-                               <span class="o">-&gt;</span> <span class="kt">FilePath</span>
-                               <span class="o">-&gt;</span> <span class="kt">Int32</span>
-                               <span class="o">-&gt;</span> <span class="kt">Maybe</span> <span class="kt">Word32</span>
-                               <span class="o">-&gt;</span> <span class="n">m</span> <span class="kt">Int32</span>
-</code></pre></div></div>
-<p>and</p>
-<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">System</span><span class="o">.</span><span class="kt">Xinu</span><span class="o">.</span><span class="kt">IO</span><span class="o">.</span><span class="kt">ByteString</span><span class="o">.</span><span class="n">openat</span> <span class="o">::</span> <span class="p">(</span><span class="kt">MonadIO</span> <span class="n">m</span><span class="p">,</span> <span class="kt">MonadMask</span> <span class="n">m</span><span class="p">)</span>
-                                 <span class="o">=&gt;</span> <span class="kt">Maybe</span> <span class="kt">Int32</span>
-                                 <span class="o">-&gt;</span> <span class="kt">ByteString</span>
-                                 <span class="o">-&gt;</span> <span class="kt">Int32</span>
-                                 <span class="o">-&gt;</span> <span class="kt">Maybe</span> <span class="kt">Word32</span>
-                                 <span class="o">-&gt;</span> <span class="n">m</span> <span class="kt">Int32</span>
-</code></pre></div></div>
-<p>Of course, the intent is to use higher-level types (like <code class="language-plaintext highlighter-rouge">Fd</code>) instead. This
-should be fairly simple to do, especially using
-<a href="https://hackage.haskell.org/package/base-4.17.0.0/docs/Data-Coerce.html#v:coerce"><code class="language-plaintext highlighter-rouge">coerce</code></a>
-since indeed, we expect (or rather, require) such <code class="language-plaintext highlighter-rouge">Fd</code> to be equal to an <code class="language-plaintext highlighter-rouge">Int32</code>
-(at least on this platform).</p>
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fnicolast.be%2Fdevelopment%2Ftesting-concurrent-code-using-dejafu%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
 
-<h2 id="learnings-and-questions">Learnings and Questions</h2>
-<p>It’s a bit too soon to know where this experiment could be heading. However,
-some early experiences:</p>
 
-<ul>
-  <li>Backpack doesn’t work when a package has <code class="language-plaintext highlighter-rouge">Build-Type</code> <code class="language-plaintext highlighter-rouge">Configure</code>, which is a
-bummer: it forces <code class="language-plaintext highlighter-rouge">xinu-ffi</code> to be a separate package, which increases
-maintenance burden. If it could be a (public) internal library, this would
-make things quite a bit easier.</li>
-  <li>A multi-package repository (using <code class="language-plaintext highlighter-rouge">cabal.project</code>) and Backpack seems to
-trigger a dependency resolution issue in Cabal, causing <a href="https://github.com/NicolasT/xinu/actions/runs/3060684207/jobs/4939496825#step:20:1"><code class="language-plaintext highlighter-rouge">cabal install
---dependencies-only all</code> to
-fail</a>.</li>
-  <li><code class="language-plaintext highlighter-rouge">stack</code> doesn’t support Backpack. This is a <a href="https://github.com/commercialhaskell/stack/issues/2540">known
-issue</a>
-but limits adoption of Backpack in the ecosystem, which is a shame, since
-ML-style module functors are a great way to reduce code duplication without
-incurring any runtime performance overhead.</li>
-  <li>Haddock doesn’t like <code class="language-plaintext highlighter-rouge">Mixins</code>, internal libraries and <code class="language-plaintext highlighter-rouge">Reexported-Modules</code>.
-Basically, no decent API documentation of <code class="language-plaintext highlighter-rouge">xinu</code> can be generated. There are
-<a href="https://github.com/haskell/haddock/issues/563">several</a> <a href="https://github.com/haskell/haddock/issues/958">related</a>
-<a href="https://github.com/haskell/cabal/issues/4905">issues</a>
-<a href="https://github.com/haskell/cabal/issues/6035">filed</a> upstream.</li>
-  <li>Given <a href="https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html">the new <code class="language-plaintext highlighter-rouge">OsPath</code> family of
-types</a>,
-does it make sense to keep providing <code class="language-plaintext highlighter-rouge">FilePath</code>, <code class="language-plaintext highlighter-rouge">ByteString</code> and other
-implementations?</li>
-  <li>More tests to ensure exception handling is working as desired are needed. How
-is this code different from the
-<a href="https://hackage.haskell.org/package/unliftio"><code class="language-plaintext highlighter-rouge">unliftio</code></a> package?</li>
-</ul>
+      
+  <nav class="pagination">
+    
+      <a href="/development/xinu-a-haskell-experiment/" class="pagination--pager" title="xinU, a Haskell Experiment
+">Previous</a>
+    
+    
+      <a href="#" class="pagination--pager disabled">Next</a>
+    
+  </nav>
 
-<h2 id="conclusion">Conclusion</h2>
-<p>Even though <code class="language-plaintext highlighter-rouge">xinu</code> is in no way meant to be as extensive as <code class="language-plaintext highlighter-rouge">unix</code>, it’s always
-interesting to explore different approaches to a given problem, especially when
-new functionality can be leveraged which wasn’t available when the original
-solution was coded.</p>
+    </div>
 
-<p>I’d love to hear your feedback. Would a library like <code class="language-plaintext highlighter-rouge">xinu</code> be of any use to
-you? What’s missing? Head to the repository’s
-<a href="https://github.com/NicolasT/xinu/discussions">Discussions</a> section!</p>]]></content><author><name>Nicolas T.</name><email>ikke@nicolast.be</email></author><category term="Development" /><summary type="html"><![CDATA[Thanks to its extensive FFI support, Haskell is a great platform to develop system applications. The `unix` library exposes a large set of POSIX APIs to Haskell code. However, it comes with some drawbacks. In this article, we'll dive into some of them, and look at some experiments in the `xinu` package to alleviate them.]]></summary></entry><entry><title type="html">A Git Branching Model for Releases with Generated Files</title><link href="https://nicolast.be/development/a-git-branching-model-for-releases-with-generated-files/" rel="alternate" type="text/html" title="A Git Branching Model for Releases with Generated Files" /><published>2017-02-28T20:27:00+01:00</published><updated>2017-02-28T20:27:00+01:00</updated><id>https://nicolast.be/development/a-git-branching-model-for-releases-with-generated-files</id><content type="html" xml:base="https://nicolast.be/development/a-git-branching-model-for-releases-with-generated-files/"><![CDATA[<p>Common wisdom dictates not to track generated files under source-control, which
-is good practice: they clutter diffs and pull-requests, one needs to ensure
-they’re always updated whenever changes are made,… Some platforms or
-build-systems require generated files to be part of distributed packages though,
-and keeping record of what gets delivered to users is of utmost importance. I
-recently adopted a release/branching scheme to bridge this gap.</p>
+    
+  </article>
 
-<p>Platforms which require machine-generated files to be part of release packages
-include the JavaScript ecosystem, where often packed and/or minified versions
-of a set of source files (generated by tools like <a href="http://gulpjs.com">Gulp</a> or <a href="https://webpack.js.org">Webpack</a>) are
-bundled in a distribution, or build systems like the <a href="https://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html">Autotools</a> toolchain
-(which brings us the familiar <code class="language-plaintext highlighter-rouge">./configure</code>, <code class="language-plaintext highlighter-rouge">make</code>, <code class="language-plaintext highlighter-rouge">make install</code> procedure)
-where files like <code class="language-plaintext highlighter-rouge">configure</code> and <code class="language-plaintext highlighter-rouge">Makefile.in</code> are generated from
-<code class="language-plaintext highlighter-rouge">configure.ac</code> and <code class="language-plaintext highlighter-rouge">Makefile.am</code> (and other auxiliary files).</p>
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
 
-<p>The traditional approach to generate release (source) packages for such projects
-is to generate the files on a developer machine, or in some <a href="https://en.wikipedia.org/wiki/Continuous_integration">CI</a> environment,
-create a tarball, and store this artifact in a safe location: if one loses this
-file, it may be impossible to ever recreate an exact copy of the original
-release. This could e.g. be caused by later versions of the build tools to
-generate slightly different results for the same input, or these tools using
-‘external’ values (including time, randomness,…) during generation.</p>
 
-<h2 id="first-attempt">First Attempt</h2>
 
-<p>If the content of these release files is so precious, it makes sense to keep
-them alongside something which is at least as valuable: the source repository of
-the codebase, which contains the all code and its history. Given this, one can
-come up with a scheme like the following:</p>
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/development/xinu-a-haskell-experiment/" rel="permalink">xinU, a Haskell Experiment
+</a>
+      
+    </h2>
+    
 
-<style scoped=""> @import url("https://nicolast.be/assets/css/gitgraph-1.8.3.css"); </style>
+  <p class="page__meta">
+    
 
-<script src="https://nicolast.be/assets/js/gitgraph-1.8.3.min.js"></script>
+    
 
-<canvas id="gitGraph1"></canvas>
-<script>
-var master = new GitGraph({
-  elementId: 'gitGraph1',
-  template: 'metro',
-  orientation: 'vertical',
-  author: 'Nicolas T.',
-  mode: 'extended',
-}).branch('master');
+    
+      
+      
 
-master.commit('Initialize repository');
-master.commit('Implement crazy feature');
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
 
-master.commit('Set version number to 1.0.0');
-master.commit({
-  message: 'Import generated files into repository',
-  tag: 'package-1.0.0',
-  sha1: 'ec4e927',
-  dotColor: '#f1c109',
-});
 
-master.commit({
-  message: 'Revert "Import generated files into repository"',
-  sha1: '12c6685',
-});
+    <p class="archive__item-excerpt" itemprop="description">Thanks to its extensive FFI support, Haskell is a great platform to develop system applications. The unix library exposes a large set of POSIX APIs to Haskel...</p>
+  </article>
+</div>
 
-master.commit('Set version number to 1.0.1-pre');
-master.commit('Fix bug in crazy feature');
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/development/a-git-branching-model-for-releases-with-generated-files/" rel="permalink">A Git Branching Model for Releases with Generated Files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Version Control Systems and generated files don’t play nice together, though for some projects such files need to be included in release packages. This artic...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/various/hello-world/" rel="permalink">Hello, world!
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          less than 1 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every blog needs a first post…
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/eikke" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+          <li><a href="https://github.com/NicolasT" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2023 Nicolas Trangez. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+  <script>
+  window.ga=function(){ga.q.push(arguments)};ga.q=[];ga.l=+new Date;
+  ga('create','UA-91109342-1','auto');
+  ga('set', 'anonymizeIp', false);
+  ga('send','pageview')
 </script>
+<script src="https://www.google-analytics.com/analytics.js" async></script>
 
-<p>Whilst this repository now contains a tag to a released tree which contains all
-generated files, this has a major drawback: it also introduces a subsequent
-commit (<code class="language-plaintext highlighter-rouge">12c6685</code>) which explicitly removes all these generated files again,
-immediately following the commit in which they were added. Furthermore, this
-requires one more commit to bump the version number. This clutters the
-repository history.</p>
 
-<h2 id="second-attempt">Second Attempt</h2>
 
-<p>To overcome the sequence of <code class="language-plaintext highlighter-rouge">Import generated files</code> and subsequent revert
-commits, we can try an alternative approach, stashing the imports away in
-a branch:</p>
 
-<canvas id="gitGraph2"></canvas>
-<script>
-var master = new GitGraph({
-  elementId: 'gitGraph2',
-  template: 'metro',
-  orientation: 'vertical',
-  author: 'Nicolas T.',
-  mode: 'extended',
-}).branch('master');
 
-master.commit('Initialize repository');
-master.commit('Implement crazy feature');
 
-var release100 = master.branch('release-1.0.0');
-release100.commit('Set version number to 1.0.0');
-release100.commit({
-  message: 'Import generated files into repository',
-  tag: 'package-1.0.0',
-  dotColor: '#f1c109',
-});
 
-master.commit('Set version number to 1.0.1-pre');
-master.commit('Fix bug in crazy feature');
-</script>
 
-<p>Whilst this approach doesn’t require any revert of <code class="language-plaintext highlighter-rouge">Import generated files</code>
-commits, it has another drawback: the relation between tags and branches is
-lost. As an example, running a command like <code class="language-plaintext highlighter-rouge">git describe --tags</code> on the
-<code class="language-plaintext highlighter-rouge">master</code> branch will never result in any release tags to be part of the output.</p>
 
-<h2 id="final-approach">Final Approach</h2>
-
-<p>Fixing the limitations of the previous approach is trivial: we simply need to
-reinstate a connection between the release tag, and the development branch
-(<code class="language-plaintext highlighter-rouge">master</code> in this example). How does one create a link between two branches? By
-merging, of course! Here’s how this works:</p>
-
-<canvas id="gitGraph3"></canvas>
-<script>
-var graph = new GitGraph({
-  elementId: 'gitGraph3',
-  template: 'metro',
-  orientation: 'vertical',
-  author: 'Nicolas T.',
-  mode: 'extended',
-});
-
-var master = graph.branch('master');
-master.commit('Initialize repository');
-master.commit({
-  message: 'Implement crazy feature',
-  sha1: '43d6bf6',
-});
-
-var release100 = master.branch('release-1.0.0');
-release100.commit('Set version number to 1.0.0');
-release100.commit({
-  message: 'Import generated files into repository',
-  tag: 'package-1.0.0',
-  dotColor: '#f1c109',
-});
-
-release100.merge(master, {
-  message: 'Merge tag \'package-1.0.0\' into master',
-  dotColor: '#a42315',
-  sha1: '49e527e',
-});
-
-master.commit('Fix bug in crazy feature');
-</script>
-
-<p>As-is, this wouldn’t yield the desired result: the merge-commit in <code class="language-plaintext highlighter-rouge">49e527e</code>
-would result in a tree which contains the generated files (in this specific
-case the tree at <code class="language-plaintext highlighter-rouge">49e527e</code> would be equal to the <code class="language-plaintext highlighter-rouge">package-1.0.0</code> tree,
-actually), which is clearly <em>not</em> what we aimed for. Instead, we should run
-<code class="language-plaintext highlighter-rouge">git merge --no-commit</code> when merging <code class="language-plaintext highlighter-rouge">package-1.0.0</code> into <code class="language-plaintext highlighter-rouge">master</code>, undo all
-the changes made in the <code class="language-plaintext highlighter-rouge">release-1.0.0</code> branch (i.e. remove the generated
-files and reset the version number), only then to <code class="language-plaintext highlighter-rouge">git commit</code> the resulting
-merge. Also note the <em>tag</em> (<code class="language-plaintext highlighter-rouge">package-1.0.0</code>) gets merged into <code class="language-plaintext highlighter-rouge">master</code>, not the
-<code class="language-plaintext highlighter-rouge">release-1.0.0</code> branch (which makes only a difference when the tag is annotated,
-of course).</p>
-
-<p>Aside: you may have noticed the schema above no longer contains a <code class="language-plaintext highlighter-rouge">Set version
-number to 1.0.1-pre</code> commit: this is no longer required, because one may opt to
-bump the version number as part of the merge commit (<code class="language-plaintext highlighter-rouge">49e527e</code>). Some may
-object against this approach and still keep a separate commit to increase the
-value. Others may use some specific number for <code class="language-plaintext highlighter-rouge">master</code> versions. All of these
-have pros and cons, pick one and be consistent.</p>
-
-<p>Whilst the approach described above may seem laborious, note it’s fairly easy
-to automate the workflow. Also, when using Autotools, it’s now possible to
-release the output of <code class="language-plaintext highlighter-rouge">git archive</code> of a release tag, instead of relying on
-<code class="language-plaintext highlighter-rouge">make dist</code>. Validating whether <code class="language-plaintext highlighter-rouge">make distcheck</code> passes, and asserting the
-content of a resulting distribution package resembles an archive generated by
-Git, e.g. as part of a CI pipeline, is of course good practice!</p>
-
-<p>Finally, this approach interacts nicely with the <a href="https://web.archive.org/web/20170707112140/http://www.scality.com/blog/continuous-integration-faster-releases-high-quality/">GitWaterFlow</a> branching model
-we presented at <a href="http://releng.polymtl.ca/RELENG2016/html/index.html">RELENG’16</a>, but more about that later!</p>]]></content><author><name>Nicolas T.</name><email>ikke@nicolast.be</email></author><category term="Development" /><summary type="html"><![CDATA[Version Control Systems and generated files don't play nice together, though for some projects such files need to be included in release packages. This article introduces a release and branching scheme to get the best of both worlds.]]></summary></entry><entry><title type="html">Hello, world!</title><link href="https://nicolast.be/various/hello-world/" rel="alternate" type="text/html" title="Hello, world!" /><published>2017-01-31T01:39:00+01:00</published><updated>2017-01-31T01:39:00+01:00</updated><id>https://nicolast.be/various/hello-world</id><content type="html" xml:base="https://nicolast.be/various/hello-world/"><![CDATA[<p>After many years of inactivity (the last entry on <a href="http://eikke.com">eikke.com</a>
-was written in 2010…) I decided to pick up blogging again. Nothing here yet,
-expect more content soon!</p>
-
-<p>For the curious: the picture above comes from <strong>The C Programming Language,
-First Edition</strong> by Kernighan &amp; Ritchie, published in 1978
-(<a href="https://archive.org">archive.org</a> maintains a
-<a href="https://archive.org/details/TheCProgrammingLanguageFirstEdition">copy</a>, page
-6). Using “Hello, world” as a textbook example for programming languages goes
-way back.</p>]]></content><author><name>Nicolas T.</name><email>ikke@nicolast.be</email></author><category term="Various" /><summary type="html"><![CDATA[Every blog needs a first post...]]></summary></entry></feed>
+  </body>
+</html>

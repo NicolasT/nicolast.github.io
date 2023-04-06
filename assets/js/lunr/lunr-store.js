@@ -16,4 +16,10 @@ var store = [{
         "tags": [],
         "url": "/development/xinu-a-haskell-experiment/",
         "teaser": null
+      },{
+        "title": "Testing concurrent code using DejaFu",
+        "excerpt":"Recently I was working on some code using GHC Haskell’s STM (short for Software Transactional Memory) functionality. STM gives a programmer mutable variables (so-called TVars), functions to work on such variables in some context (e.g., writeTVar :: TVar a -&gt; a -&gt; STM ()), and a way to run a...","categories": ["Development"],
+        "tags": [],
+        "url": "/development/testing-concurrent-code-using-dejafu/",
+        "teaser": null
       }]
