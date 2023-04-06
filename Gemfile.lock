@@ -148,7 +148,7 @@ GEM
     typhoeus (1.4.0)
       ethon (>= 0.9.0)
     unicode-display_width (2.4.2)
-    webrick (1.7.0)
+    webrick (1.8.1)
     yell (2.2.2)
     zeitwerk (2.6.6)
 
@@ -164,7 +164,7 @@ DEPENDENCIES
   jekyll-paginate
   jekyll-sitemap
   minimal-mistakes-jekyll (~> 4.24)
-  webrick (~> 1.7)
+  webrick (~> 1.8)
 
 BUNDLED WITH
    2.2.22
