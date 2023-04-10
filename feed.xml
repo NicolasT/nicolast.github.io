@@ -1,4 +1,144 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://nicolast.be/feed.xml" rel="self" type="application/atom+xml" /><link href="https://nicolast.be/" rel="alternate" type="text/html" /><updated>2023-04-07T11:29:18+02:00</updated><id>https://nicolast.be/feed.xml</id><title type="html">nicolast.be</title><subtitle>My blog.</subtitle><author><name>Nicolas T.</name><email>ikke@nicolast.be</email></author><entry><title type="html">Testing concurrent code using DejaFu</title><link href="https://nicolast.be/development/testing-concurrent-code-using-dejafu/" rel="alternate" type="text/html" title="Testing concurrent code using DejaFu" /><published>2023-04-06T21:17:00+02:00</published><updated>2023-04-06T21:17:00+02:00</updated><id>https://nicolast.be/development/testing-concurrent-code-using-dejafu</id><content type="html" xml:base="https://nicolast.be/development/testing-concurrent-code-using-dejafu/"><![CDATA[<p>Recently I was working on some code using <a href="https://www.haskell.org/ghc/">GHC</a>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.3.2">Jekyll</generator><link href="https://nicolast.be/feed.xml" rel="self" type="application/atom+xml" /><link href="https://nicolast.be/" rel="alternate" type="text/html" /><updated>2023-04-10T23:34:29+02:00</updated><id>https://nicolast.be/feed.xml</id><title type="html">nicolast.be</title><subtitle>My blog.</subtitle><author><name>Nicolas T.</name><email>ikke@nicolast.be</email></author><entry><title type="html">Using Literate Haskell with Jekyll</title><link href="https://nicolast.be/various/jekyll-literate-haskell/" rel="alternate" type="text/html" title="Using Literate Haskell with Jekyll" /><published>2023-04-10T23:28:00+02:00</published><updated>2023-04-10T23:28:00+02:00</updated><id>https://nicolast.be/various/jekyll-literate-haskell</id><content type="html" xml:base="https://nicolast.be/various/jekyll-literate-haskell/"><![CDATA[<p>This blog is powered by the <a href="https://jekyllrb.com/">Jekyll</a> static site generator, hosted on
+<a href="https://pages.github.com/">GitHub Pages</a>.
+With Jekyll, you write posts in
+<a href="https://daringfireball.net/projects/markdown/syntax">Markdown</a>-formatted files, which are
+then rendered into HTML using some templates. When writing technical articles including code
+examples, as an author I want to make sure these examples are correct, i.e., they compile
+cleanly and, ideally, some tests pass. I assume the reader appreciates this as well (I know
+I do!).</p>
+
+<p>One way to tackle this is keeping the code in some source file(s), ensure these compile, and
+copy-paste snippets into the Markdown source of an article. This works, but copy-paste leaves
+room for error, and updating source-code while writing the article, then making sure all snippets
+are updated correctly, is definitely error-prone.</p>
+
+<p>Wouldn’t it be nice if the article file itself would be executable (or, at least, checked by the
+compiler)? Luckily this is possible, without all too much hassle! Given a working Jekyll
+installation, here’s what we want:</p>
+
+<ul>
+  <li>A way to turn an article, including code blocks, into input the compiler can work with.</li>
+  <li>A way to <em>run</em> the article file, or load it in a REPL, including any dependencies the code
+relies on.</li>
+  <li>A way for Jekyll to include such articles in the rendered website.</li>
+</ul>
+
+<h2 id="compiling-markdown">Compiling Markdown</h2>
+
+<p>The <a href="https://www.haskell.org/ghc/">GHC</a> <a href="https://www.haskell.org/">Haskell</a> compiler has
+built-in support for Literate Haskell, which allows to interleave code blocks with text.
+The native Literate Haskell support doesn’t know about Markdown formatting, but with some
+flags, GHC can be instructed to use some custom preprocessor which knows how to extract code
+from some literate source file.</p>
+
+<p>The <a href="https://github.com/sol/markdown-unlit">markdown-unlit</a> package does exactly this for
+Markdown-formatted files: it extracts all Haskell code blocks and passes these to the compiler.
+So Markdown-formatted input like</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Here's how to print the string "Hello, world" on the console:
+
+```haskell
+printHelloWorld :: IO ()
+printHelloWorld = putStrLn "Hello, world"
+```
+
+Simple!
+</code></pre></div></div>
+
+<p>becomes</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">printHelloWorld</span> <span class="o">::</span> <span class="kt">IO</span> <span class="nb">()</span>
+<span class="n">printHelloWorld</span> <span class="o">=</span> <span class="n">putStrLn</span> <span class="s">"Hello, world"</span>
+</code></pre></div></div>
+
+<p>For GHC to use the <code class="language-plaintext highlighter-rouge">markdown-unlit</code> preprocessor, the <code class="language-plaintext highlighter-rouge">-pgmL</code> option must be used, and the
+source file must have the <code class="language-plaintext highlighter-rouge">.lhs</code> file extension.</p>
+
+<h3 id="aside-testing-readmemd">Aside: Testing <code class="language-plaintext highlighter-rouge">README.md</code></h3>
+
+<p>Next to running Markdown articles, <code class="language-plaintext highlighter-rouge">markdown-unlit</code> can be used to test your project’s
+<code class="language-plaintext highlighter-rouge">README.md</code>, as I do in the <a href="https://github.com/NicolasT/landlock-hs/tree/main/landlock"><code class="language-plaintext highlighter-rouge">landlock</code></a>
+package. See the <a href="https://github.com/sol/markdown-unlit#extended-example">this example</a>
+for more information!</p>
+
+<h2 id="running-articles">Running Articles</h2>
+
+<p>Now we know how to extract code blocks from article source files for the compiler to process
+them, we need a way to invoke the compiler (or launch it in REPL mode) with some source file.
+Of course the <code class="language-plaintext highlighter-rouge">ghc</code> binary can be invoked as-is, passing the necessary <code class="language-plaintext highlighter-rouge">-pgmL</code> option and
+any others, but this has several drawbacks, especially when the code in the article depends on
+some other packages:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">markdown-unlit</code> must be pre-installed</li>
+  <li>We must not forget the <code class="language-plaintext highlighter-rouge">-pgmL</code> option, including the path to <code class="language-plaintext highlighter-rouge">markdown-unlit</code> unless it’s
+installed in <code class="language-plaintext highlighter-rouge">$PATH</code></li>
+  <li>Any dependencies must be installed in a way for GHC to find them</li>
+  <li>Dependencies may require <code class="language-plaintext highlighter-rouge">-package ...</code> or other options to be passed to GHC</li>
+</ul>
+
+<p>In the Haskell ecosystem, the <code class="language-plaintext highlighter-rouge">cabal</code> tool is used to install dependencies, invoke
+the compiler with the right options to find these dependencies, etc. In regular Haskell
+packages, a Cabal project description file (<code class="language-plaintext highlighter-rouge">packagename.cabal</code>) contains all information
+needed for <code class="language-plaintext highlighter-rouge">cabal</code> to do its job. A Jekyll article Markdown source file doesn’t come with
+a project description file, so how can the <code class="language-plaintext highlighter-rouge">cabal-install</code> functionality be reused? I recently
+found out <code class="language-plaintext highlighter-rouge">cabal</code> nowadays has a <em>scripting mode</em>: it can read metadata, enclosed in a comment block,
+from a source file, and use it accordingly. So, including the following in the Markdown source
+of an article will instruct <code class="language-plaintext highlighter-rouge">cabal</code> to provide all dependencies (none but <code class="language-plaintext highlighter-rouge">base</code> for this
+article), ensure <code class="language-plaintext highlighter-rouge">markdown-unlit</code> is available, and invoke <code class="language-plaintext highlighter-rouge">ghc</code> with the right options:</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">{- cabal:
+build-depends: base ^&gt;=4.17
+default-language: Haskell2010
+build-tool-depends: markdown-unlit:markdown-unlit
+ghc-options: -pgmL markdown-unlit -Wall -Werror
+-}</span>
+</code></pre></div></div>
+
+<p>The above snippet could be put in any kind of section, but I prefer to put it in a
+<code class="language-plaintext highlighter-rouge">haskell</code> code-block, so it’s retained in the output of <code class="language-plaintext highlighter-rouge">markdown-unlit</code>.</p>
+
+<p>Next to <code class="language-plaintext highlighter-rouge">build-depends</code> and similar fields in a <code class="language-plaintext highlighter-rouge">cabal</code> section, configuration used in
+a <code class="language-plaintext highlighter-rouge">cabal.project</code> file can be put in a <code class="language-plaintext highlighter-rouge">project</code> section. See
+<a href="https://cabal.readthedocs.io/en/stable/getting-started.html#run-a-single-file-haskell-script">the documentation</a>
+for more details.</p>
+
+<p>With all this in place, articles can be executed using <code class="language-plaintext highlighter-rouge">cabal run article.lhs</code>, or
+even better, loaded in a REPL session, including all dependencies, using
+<code class="language-plaintext highlighter-rouge">cabal repl article.lhs</code>.</p>
+
+<h2 id="rendering-literate-haskell-articles">Rendering Literate Haskell Articles</h2>
+
+<p>By default, Jekyll won’t read <code class="language-plaintext highlighter-rouge">.lhs</code> files in the <code class="language-plaintext highlighter-rouge">_drafts</code> or <code class="language-plaintext highlighter-rouge">_posts</code> folders as Markdown
+files. By default, it will only read files with the <code class="language-plaintext highlighter-rouge">.md</code> extension (and several others)
+as Markdown. To treat <code class="language-plaintext highlighter-rouge">.lhs</code> files the same way, add the following to your site’s
+<code class="language-plaintext highlighter-rouge">_config.yml</code>:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">markdown_ext</span><span class="pi">:</span> <span class="s2">"</span><span class="s">markdown,mkdown,mkdn,mkd,md,lhs"</span>
+</code></pre></div></div>
+
+<p>Any <code class="language-plaintext highlighter-rouge">.lhs</code> files in the <code class="language-plaintext highlighter-rouge">_drafts</code>, <code class="language-plaintext highlighter-rouge">_posts</code> and other folders will now be rendered as Markdown
+sources.</p>
+
+<h2 id="finishing-up">Finishing Up</h2>
+
+<p>Finally, let’s wrap things up for this particular article:</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">main</span> <span class="o">::</span> <span class="kt">IO</span> <span class="nb">()</span>
+<span class="n">main</span> <span class="o">=</span> <span class="n">printHelloWorld</span>
+</code></pre></div></div>
+
+<p>and indeed:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cabal run _drafts/jekyll-literate-haskell.lhs
+Hello, world
+</code></pre></div></div>
+
+<p>Of course, this could launch a <a href="https://hackage.haskell.org/package/tasty">tasty</a> test-suite
+or similar, see <a href="/development/testing-concurrent-code-using-dejafu/#testing">here</a>
+for an example.</p>
+
+<p>Happy hacking^Wwriting!</p>]]></content><author><name>Nicolas T.</name><email>ikke@nicolast.be</email></author><category term="Various" /><summary type="html"><![CDATA[With a little bit of configuration, Haskell code in Jekyll articles can be executed or loaded in a REPL: a great way to ensure the code actually works!]]></summary></entry><entry><title type="html">Testing concurrent code using DejaFu</title><link href="https://nicolast.be/development/testing-concurrent-code-using-dejafu/" rel="alternate" type="text/html" title="Testing concurrent code using DejaFu" /><published>2023-04-06T21:17:00+02:00</published><updated>2023-04-06T21:17:00+02:00</updated><id>https://nicolast.be/development/testing-concurrent-code-using-dejafu</id><content type="html" xml:base="https://nicolast.be/development/testing-concurrent-code-using-dejafu/"><![CDATA[<p>Recently I was working on some code using <a href="https://www.haskell.org/ghc/">GHC</a>
 <a href="https://www.haskell.org">Haskell</a>’s <a href="https://hackage.haskell.org/package/stm">STM</a> (short for
 Software Transactional Memory)
 functionality. STM gives a programmer mutable variables (so-called <code class="language-plaintext highlighter-rouge">TVar</code>s), functions to work on such

@@ -22,4 +22,10 @@ var store = [{
         "tags": [],
         "url": "/development/testing-concurrent-code-using-dejafu/",
         "teaser": null
+      },{
+        "title": "Using Literate Haskell with Jekyll",
+        "excerpt":"This blog is powered by the Jekyll static site generator, hosted on GitHub Pages. With Jekyll, you write posts in Markdown-formatted files, which are then rendered into HTML using some templates. When writing technical articles including code examples, as an author I want to make sure these examples are correct,...","categories": ["Various"],
+        "tags": [],
+        "url": "/various/jekyll-literate-haskell/",
+        "teaser": null
       }]

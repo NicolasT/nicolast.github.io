@@ -1,0 +1,806 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.24.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>Using Literate Haskell with Jekyll » nicolast.be</title>
+<meta name="description" content="With a little bit of configuration, Haskell code in Jekyll articles can be executed or loaded in a REPL: a great way to ensure the code actually works!">
+
+
+  <meta name="author" content="Nicolas T.">
+  
+  <meta property="article:author" content="Nicolas T.">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en">
+<meta property="og:site_name" content="nicolast.be">
+<meta property="og:title" content="Using Literate Haskell with Jekyll">
+<meta property="og:url" content="https://nicolast.be/various/jekyll-literate-haskell/">
+
+
+  <meta property="og:description" content="With a little bit of configuration, Haskell code in Jekyll articles can be executed or loaded in a REPL: a great way to ensure the code actually works!">
+
+
+
+  <meta property="og:image" content="https://nicolast.be/assets/images/3776224595_9f783c6f32_c.jpg">
+
+
+
+  <meta name="twitter:site" content="@eikke">
+  <meta name="twitter:title" content="Using Literate Haskell with Jekyll">
+  <meta name="twitter:description" content="With a little bit of configuration, Haskell code in Jekyll articles can be executed or loaded in a REPL: a great way to ensure the code actually works!">
+  <meta name="twitter:url" content="https://nicolast.be/various/jekyll-literate-haskell/">
+
+  
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://nicolast.be/assets/images/3776224595_9f783c6f32_c.jpg">
+  
+
+  
+    <meta name="twitter:creator" content="@eikke">
+  
+
+
+
+  <meta property="article:published_time" content="2023-04-10T23:28:00+02:00">
+
+
+
+
+
+
+<link rel="canonical" href="https://nicolast.be/various/jekyll-literate-haskell/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Nicolas Trangez",
+      "url": "https://nicolast.be/",
+      "sameAs": ["https://twitter.com/eikke"]
+    
+  }
+</script>
+
+
+  <meta name="google-site-verification" content="7SXobc1ltJXe4Xqy_ZBZJEVc1sWPi03lIkaHIXCiNqc" />
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="nicolast.be Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css"></noscript>
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use http://realfavicongenerator.net/ -->
+<link rel="apple-touch-icon" sizes="76x76" href="/assets/images/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/assets/images/favicon/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/assets/images/favicon/favicon-16x16.png" sizes="16x16">
+<link rel="manifest" href="/assets/images/favicon/manifest.json">
+<link rel="mask-icon" href="/assets/images/favicon/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="shortcut icon" href="/assets/images/favicon/favicon.ico">
+<meta name="msapplication-config" content="/assets/images/favicon/browserconfig.xml">
+<meta name="theme-color" content="#ffffff">
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          nicolast.be
+          
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/categories/">Categories</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('/assets/images/3776224595_9f783c6f32_c.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          Using Literate Haskell with Jekyll
+
+        
+      </h1>
+      
+        <p class="page__lead">With a little bit of configuration, Haskell code in Jekyll articles can be executed or loaded in a REPL: a great way to ensure the code actually works!
+</p>
+      
+      
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+      
+      
+    </div>
+  
+  
+    <span class="page__hero-caption">Photo credit: <a href="https://www.flickr.com/photos/mandaloo/3776224595/"><strong>Mandy Lackey</strong></a>
+</span>
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/images/avatar-nicolas.jpg" alt="Nicolas T." itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Nicolas T.</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Software guy, former Principal Architect @ Scality. <a href="http://haskell.org">Haskell</a>‘ist, music-lover and startup-minded.</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">🇫🇷 Paris | 🇧🇪 Antwerp</span>
+        </li>
+      
+
+      
+
+      
+
+      
+        <li>
+          <a href="mailto:ikke@nicolast.be">
+            <meta itemprop="email" content="ikke@nicolast.be" />
+            <i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+        <li>
+          <a href="https://twitter.com/eikke" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+        <li>
+          <a href="https://www.linkedin.com/in/nicolastrangez" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span class="label">LinkedIn</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+        <li>
+          <a href="https://github.com/NicolasT" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+        <li>
+          <a href="https://stackoverflow.com/users/1285443/nicolas-trangez" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-stack-overflow" aria-hidden="true"></i><span class="label">Stack Overflow</span>
+          </a>
+        </li>
+      
+
+      
+        <li>
+          <a href="https://last.fm/user/eikke" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-lastfm-square" aria-hidden="true"></i><span class="label">Last.fm</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="Using Literate Haskell with Jekyll">
+    <meta itemprop="description" content="With a little bit of configuration, Haskell code in Jekyll articles can be executed or loaded in a REPL: a great way to ensure the code actually works!">
+    <meta itemprop="datePublished" content="2023-04-10T23:28:00+02:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <p>This blog is powered by the <a href="https://jekyllrb.com/">Jekyll</a> static site generator, hosted on
+<a href="https://pages.github.com/">GitHub Pages</a>.
+With Jekyll, you write posts in
+<a href="https://daringfireball.net/projects/markdown/syntax">Markdown</a>-formatted files, which are
+then rendered into HTML using some templates. When writing technical articles including code
+examples, as an author I want to make sure these examples are correct, i.e., they compile
+cleanly and, ideally, some tests pass. I assume the reader appreciates this as well (I know
+I do!).</p>
+
+<p>One way to tackle this is keeping the code in some source file(s), ensure these compile, and
+copy-paste snippets into the Markdown source of an article. This works, but copy-paste leaves
+room for error, and updating source-code while writing the article, then making sure all snippets
+are updated correctly, is definitely error-prone.</p>
+
+<p>Wouldn’t it be nice if the article file itself would be executable (or, at least, checked by the
+compiler)? Luckily this is possible, without all too much hassle! Given a working Jekyll
+installation, here’s what we want:</p>
+
+<ul>
+  <li>A way to turn an article, including code blocks, into input the compiler can work with.</li>
+  <li>A way to <em>run</em> the article file, or load it in a REPL, including any dependencies the code
+relies on.</li>
+  <li>A way for Jekyll to include such articles in the rendered website.</li>
+</ul>
+
+<h2 id="compiling-markdown">Compiling Markdown</h2>
+
+<p>The <a href="https://www.haskell.org/ghc/">GHC</a> <a href="https://www.haskell.org/">Haskell</a> compiler has
+built-in support for Literate Haskell, which allows to interleave code blocks with text.
+The native Literate Haskell support doesn’t know about Markdown formatting, but with some
+flags, GHC can be instructed to use some custom preprocessor which knows how to extract code
+from some literate source file.</p>
+
+<p>The <a href="https://github.com/sol/markdown-unlit">markdown-unlit</a> package does exactly this for
+Markdown-formatted files: it extracts all Haskell code blocks and passes these to the compiler.
+So Markdown-formatted input like</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Here's how to print the string "Hello, world" on the console:
+
+```haskell
+printHelloWorld :: IO ()
+printHelloWorld = putStrLn "Hello, world"
+```
+
+Simple!
+</code></pre></div></div>
+
+<p>becomes</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">printHelloWorld</span> <span class="o">::</span> <span class="kt">IO</span> <span class="nb">()</span>
+<span class="n">printHelloWorld</span> <span class="o">=</span> <span class="n">putStrLn</span> <span class="s">"Hello, world"</span>
+</code></pre></div></div>
+
+<p>For GHC to use the <code class="language-plaintext highlighter-rouge">markdown-unlit</code> preprocessor, the <code class="language-plaintext highlighter-rouge">-pgmL</code> option must be used, and the
+source file must have the <code class="language-plaintext highlighter-rouge">.lhs</code> file extension.</p>
+
+<h3 id="aside-testing-readmemd">Aside: Testing <code class="language-plaintext highlighter-rouge">README.md</code></h3>
+
+<p>Next to running Markdown articles, <code class="language-plaintext highlighter-rouge">markdown-unlit</code> can be used to test your project’s
+<code class="language-plaintext highlighter-rouge">README.md</code>, as I do in the <a href="https://github.com/NicolasT/landlock-hs/tree/main/landlock"><code class="language-plaintext highlighter-rouge">landlock</code></a>
+package. See the <a href="https://github.com/sol/markdown-unlit#extended-example">this example</a>
+for more information!</p>
+
+<h2 id="running-articles">Running Articles</h2>
+
+<p>Now we know how to extract code blocks from article source files for the compiler to process
+them, we need a way to invoke the compiler (or launch it in REPL mode) with some source file.
+Of course the <code class="language-plaintext highlighter-rouge">ghc</code> binary can be invoked as-is, passing the necessary <code class="language-plaintext highlighter-rouge">-pgmL</code> option and
+any others, but this has several drawbacks, especially when the code in the article depends on
+some other packages:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">markdown-unlit</code> must be pre-installed</li>
+  <li>We must not forget the <code class="language-plaintext highlighter-rouge">-pgmL</code> option, including the path to <code class="language-plaintext highlighter-rouge">markdown-unlit</code> unless it’s
+installed in <code class="language-plaintext highlighter-rouge">$PATH</code></li>
+  <li>Any dependencies must be installed in a way for GHC to find them</li>
+  <li>Dependencies may require <code class="language-plaintext highlighter-rouge">-package ...</code> or other options to be passed to GHC</li>
+</ul>
+
+<p>In the Haskell ecosystem, the <code class="language-plaintext highlighter-rouge">cabal</code> tool is used to install dependencies, invoke
+the compiler with the right options to find these dependencies, etc. In regular Haskell
+packages, a Cabal project description file (<code class="language-plaintext highlighter-rouge">packagename.cabal</code>) contains all information
+needed for <code class="language-plaintext highlighter-rouge">cabal</code> to do its job. A Jekyll article Markdown source file doesn’t come with
+a project description file, so how can the <code class="language-plaintext highlighter-rouge">cabal-install</code> functionality be reused? I recently
+found out <code class="language-plaintext highlighter-rouge">cabal</code> nowadays has a <em>scripting mode</em>: it can read metadata, enclosed in a comment block,
+from a source file, and use it accordingly. So, including the following in the Markdown source
+of an article will instruct <code class="language-plaintext highlighter-rouge">cabal</code> to provide all dependencies (none but <code class="language-plaintext highlighter-rouge">base</code> for this
+article), ensure <code class="language-plaintext highlighter-rouge">markdown-unlit</code> is available, and invoke <code class="language-plaintext highlighter-rouge">ghc</code> with the right options:</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">{- cabal:
+build-depends: base ^&gt;=4.17
+default-language: Haskell2010
+build-tool-depends: markdown-unlit:markdown-unlit
+ghc-options: -pgmL markdown-unlit -Wall -Werror
+-}</span>
+</code></pre></div></div>
+
+<p>The above snippet could be put in any kind of section, but I prefer to put it in a
+<code class="language-plaintext highlighter-rouge">haskell</code> code-block, so it’s retained in the output of <code class="language-plaintext highlighter-rouge">markdown-unlit</code>.</p>
+
+<p>Next to <code class="language-plaintext highlighter-rouge">build-depends</code> and similar fields in a <code class="language-plaintext highlighter-rouge">cabal</code> section, configuration used in
+a <code class="language-plaintext highlighter-rouge">cabal.project</code> file can be put in a <code class="language-plaintext highlighter-rouge">project</code> section. See
+<a href="https://cabal.readthedocs.io/en/stable/getting-started.html#run-a-single-file-haskell-script">the documentation</a>
+for more details.</p>
+
+<p>With all this in place, articles can be executed using <code class="language-plaintext highlighter-rouge">cabal run article.lhs</code>, or
+even better, loaded in a REPL session, including all dependencies, using
+<code class="language-plaintext highlighter-rouge">cabal repl article.lhs</code>.</p>
+
+<h2 id="rendering-literate-haskell-articles">Rendering Literate Haskell Articles</h2>
+
+<p>By default, Jekyll won’t read <code class="language-plaintext highlighter-rouge">.lhs</code> files in the <code class="language-plaintext highlighter-rouge">_drafts</code> or <code class="language-plaintext highlighter-rouge">_posts</code> folders as Markdown
+files. By default, it will only read files with the <code class="language-plaintext highlighter-rouge">.md</code> extension (and several others)
+as Markdown. To treat <code class="language-plaintext highlighter-rouge">.lhs</code> files the same way, add the following to your site’s
+<code class="language-plaintext highlighter-rouge">_config.yml</code>:</p>
+
+<div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">markdown_ext</span><span class="pi">:</span> <span class="s2">"</span><span class="s">markdown,mkdown,mkdn,mkd,md,lhs"</span>
+</code></pre></div></div>
+
+<p>Any <code class="language-plaintext highlighter-rouge">.lhs</code> files in the <code class="language-plaintext highlighter-rouge">_drafts</code>, <code class="language-plaintext highlighter-rouge">_posts</code> and other folders will now be rendered as Markdown
+sources.</p>
+
+<h2 id="finishing-up">Finishing Up</h2>
+
+<p>Finally, let’s wrap things up for this particular article:</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">main</span> <span class="o">::</span> <span class="kt">IO</span> <span class="nb">()</span>
+<span class="n">main</span> <span class="o">=</span> <span class="n">printHelloWorld</span>
+</code></pre></div></div>
+
+<p>and indeed:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ cabal run _drafts/jekyll-literate-haskell.lhs
+Hello, world
+</code></pre></div></div>
+
+<p>Of course, this could launch a <a href="https://hackage.haskell.org/package/tasty">tasty</a> test-suite
+or similar, see <a href="/development/testing-concurrent-code-using-dejafu/#testing">here</a>
+for an example.</p>
+
+<p>Happy hacking^Wwriting!</p>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#various" class="page__taxonomy-item" rel="tag">Various</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2023-04-10T23:28:00+02:00">April 10, 2023</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=eikke&text=Using+Literate+Haskell+with+Jekyll%20https%3A%2F%2Fnicolast.be%2Fvarious%2Fjekyll-literate-haskell%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fnicolast.be%2Fvarious%2Fjekyll-literate-haskell%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fnicolast.be%2Fvarious%2Fjekyll-literate-haskell%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/development/testing-concurrent-code-using-dejafu/" class="pagination--pager" title="Testing concurrent code using DejaFu
+">Previous</a>
+    
+    
+      <a href="#" class="pagination--pager disabled">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/development/testing-concurrent-code-using-dejafu/" rel="permalink">Testing concurrent code using DejaFu
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Writing correct concurrent code with shared mutable state is hard. Testing concurrent code with shared mutable state is hard. In Haskell, we can use STM to t...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/development/xinu-a-haskell-experiment/" rel="permalink">xinU, a Haskell Experiment
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Thanks to its extensive FFI support, Haskell is a great platform to develop system applications. The unix library exposes a large set of POSIX APIs to Haskel...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/development/a-git-branching-model-for-releases-with-generated-files/" rel="permalink">A Git Branching Model for Releases with Generated Files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Version Control Systems and generated files don’t play nice together, though for some projects such files need to be included in release packages. This artic...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/various/hello-world/" rel="permalink">Hello, world!
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          less than 1 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Every blog needs a first post…
+</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/eikke" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+          <li><a href="https://github.com/NicolasT" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2023 Nicolas Trangez. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+  <script>
+  window.ga=function(){ga.q.push(arguments)};ga.q=[];ga.l=+new Date;
+  ga('create','UA-91109342-1','auto');
+  ga('set', 'anonymizeIp', false);
+  ga('send','pageview')
+</script>
+<script src="https://www.google-analytics.com/analytics.js" async></script>
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
