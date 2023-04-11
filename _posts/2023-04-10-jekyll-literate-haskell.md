@@ -71,7 +71,7 @@ source file must have the `.lhs` file extension.
 
 Next to running Markdown articles, `markdown-unlit` can be used to test your project's
 `README.md`, as I do in the [`landlock`](https://github.com/NicolasT/landlock-hs/tree/main/landlock)
-package. See the [this example](https://github.com/sol/markdown-unlit#extended-example)
+package. See [this example](https://github.com/sol/markdown-unlit#extended-example)
 for more information!
 
 ## Running Articles
