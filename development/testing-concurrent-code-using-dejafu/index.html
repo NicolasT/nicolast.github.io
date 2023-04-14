@@ -54,6 +54,8 @@
 
 
 
+  <meta property="article:modified_time" content="2023-04-14T21:31:00+02:00">
+
 
 
 
@@ -362,7 +364,7 @@
     <meta itemprop="headline" content="Testing concurrent code using DejaFu">
     <meta itemprop="description" content="Writing correct concurrent code with shared mutable state is hard. Testing concurrent code with shared mutable state is hard. In Haskell, we can use STM to transactionally change state, and DejaFu to test concurrent code. In this post, we look into how this is done, and discuss an approach to simplify the testing effort.">
     <meta itemprop="datePublished" content="2023-04-06T21:17:00+02:00">
-    
+    <meta itemprop="dateModified" content="2023-04-14T21:31:00+02:00">
 
     <div class="page__inner-wrap">
       
@@ -777,7 +779,8 @@ and hence a dictionary lookup at runtime. I’d love to see some benchmarks wher
 a library is defined in terms of <code class="language-plaintext highlighter-rouge">MonadConc</code> and <code class="language-plaintext highlighter-rouge">MonadSTM</code>, but every function
 is <code class="language-plaintext highlighter-rouge">INLINEABLE</code> and/or <code class="language-plaintext highlighter-rouge">SPECIALIZE</code>d to <code class="language-plaintext highlighter-rouge">Control.Concurrent.STM.STM</code> and <code class="language-plaintext highlighter-rouge">IO</code> so
 there’s, ideally, no performance hit for <em>regular application</em> consumers of the
-library vs. using plain <code class="language-plaintext highlighter-rouge">STM</code> and <code class="language-plaintext highlighter-rouge">IO</code> in the library code.</p>
+library vs. using plain <code class="language-plaintext highlighter-rouge">STM</code> and <code class="language-plaintext highlighter-rouge">IO</code> in the library code. [Update: <a href="/development/concurrency-and-performance/">here’s the
+answer</a>]</p>
   </li>
 </ul>
 
@@ -806,7 +809,7 @@ library vs. using plain <code class="language-plaintext highlighter-rouge">STM</
 
         
 
-  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2023-04-06T21:17:00+02:00">April 6, 2023</time></p>
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2023-04-14">April 14, 2023</time></p>
 
 
       </footer>
