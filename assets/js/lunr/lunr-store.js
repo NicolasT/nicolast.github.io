@@ -28,4 +28,10 @@ var store = [{
         "tags": [],
         "url": "/various/jekyll-literate-haskell/",
         "teaser": null
+      },{
+        "title": "`concurrency` and Performance",
+        "excerpt":"When using DejaFu to test concurrent code, as introduced in a previous post, the MonadConc and MonadSTM type classes must be used to abstract over the implementation of concurrency and STM. In regular code, the types and functions in the standard IO and STM monads would be used instead. Luckily,...","categories": ["Development"],
+        "tags": [],
+        "url": "/development/concurrency-and-performance/",
+        "teaser": null
       }]

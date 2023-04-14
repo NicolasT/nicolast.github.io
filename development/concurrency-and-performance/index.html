@@ -1,0 +1,1190 @@
+<!doctype html>
+<!--
+  Minimal Mistakes Jekyll Theme 4.24.0 by Michael Rose
+  Copyright 2013-2020 Michael Rose - mademistakes.com | @mmistakes
+  Free for personal and commercial use under the MIT license
+  https://github.com/mmistakes/minimal-mistakes/blob/master/LICENSE
+-->
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="utf-8">
+
+<!-- begin _includes/seo.html --><title>concurrency and Performance » nicolast.be</title>
+<meta name="description" content="Testing concurrent code using DejaFu requires the use of MonadConc and MonadSTM instead of plain IO and STM. Is there any performance impact, and if there is, can it be recovered?">
+
+
+  <meta name="author" content="Nicolas T.">
+  
+  <meta property="article:author" content="Nicolas T.">
+  
+
+
+<meta property="og:type" content="article">
+<meta property="og:locale" content="en">
+<meta property="og:site_name" content="nicolast.be">
+<meta property="og:title" content="concurrency and Performance">
+<meta property="og:url" content="https://nicolast.be/development/concurrency-and-performance/">
+
+
+  <meta property="og:description" content="Testing concurrent code using DejaFu requires the use of MonadConc and MonadSTM instead of plain IO and STM. Is there any performance impact, and if there is, can it be recovered?">
+
+
+
+  <meta property="og:image" content="https://nicolast.be/assets/images/32902732016_430826ec3b_c.jpg">
+
+
+
+  <meta name="twitter:site" content="@eikke">
+  <meta name="twitter:title" content="concurrency and Performance">
+  <meta name="twitter:description" content="Testing concurrent code using DejaFu requires the use of MonadConc and MonadSTM instead of plain IO and STM. Is there any performance impact, and if there is, can it be recovered?">
+  <meta name="twitter:url" content="https://nicolast.be/development/concurrency-and-performance/">
+
+  
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://nicolast.be/assets/images/32902732016_430826ec3b_c.jpg">
+  
+
+  
+    <meta name="twitter:creator" content="@eikke">
+  
+
+
+
+  <meta property="article:published_time" content="2023-04-14T19:54:00+02:00">
+
+
+
+
+
+
+<link rel="canonical" href="https://nicolast.be/development/concurrency-and-performance/">
+
+
+
+
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    
+      "@type": "Person",
+      "name": "Nicolas Trangez",
+      "url": "https://nicolast.be/",
+      "sameAs": ["https://twitter.com/eikke"]
+    
+  }
+</script>
+
+
+  <meta name="google-site-verification" content="7SXobc1ltJXe4Xqy_ZBZJEVc1sWPi03lIkaHIXCiNqc" />
+
+
+
+
+
+
+<!-- end _includes/seo.html -->
+
+
+
+  <link href="/feed.xml" type="application/atom+xml" rel="alternate" title="nicolast.be Feed">
+
+
+<!-- https://t.co/dKP3o1e -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+  document.documentElement.className = document.documentElement.className.replace(/\bno-js\b/g, '') + ' js ';
+</script>
+
+<!-- For all browsers -->
+<link rel="stylesheet" href="/assets/css/main.css">
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5/css/all.min.css"></noscript>
+
+
+
+    <!-- start custom head snippets -->
+
+<!-- insert favicons. use http://realfavicongenerator.net/ -->
+<link rel="apple-touch-icon" sizes="76x76" href="/assets/images/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/assets/images/favicon/favicon-32x32.png" sizes="32x32">
+<link rel="icon" type="image/png" href="/assets/images/favicon/favicon-16x16.png" sizes="16x16">
+<link rel="manifest" href="/assets/images/favicon/manifest.json">
+<link rel="mask-icon" href="/assets/images/favicon/safari-pinned-tab.svg" color="#5bbad5">
+<link rel="shortcut icon" href="/assets/images/favicon/favicon.ico">
+<meta name="msapplication-config" content="/assets/images/favicon/browserconfig.xml">
+<meta name="theme-color" content="#ffffff">
+
+<!-- end custom head snippets -->
+
+  </head>
+
+  <body class="layout--single">
+    <nav class="skip-links">
+  <ul>
+    <li><a href="#site-nav" class="screen-reader-shortcut">Skip to primary navigation</a></li>
+    <li><a href="#main" class="screen-reader-shortcut">Skip to content</a></li>
+    <li><a href="#footer" class="screen-reader-shortcut">Skip to footer</a></li>
+  </ul>
+</nav>
+
+    <!--[if lt IE 9]>
+<div class="notice--danger align-center" style="margin: 0;">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience.</div>
+<![endif]-->
+
+    
+
+<div class="masthead">
+  <div class="masthead__inner-wrap">
+    <div class="masthead__menu">
+      <nav id="site-nav" class="greedy-nav">
+        
+        <a class="site-title" href="/">
+          nicolast.be
+          
+        </a>
+        <ul class="visible-links"><li class="masthead__menu-item">
+              <a href="/categories/">Categories</a>
+            </li></ul>
+        
+        <button class="greedy-nav__toggle hidden" type="button">
+          <span class="visually-hidden">Toggle menu</span>
+          <div class="navicon"></div>
+        </button>
+        <ul class="hidden-links hidden"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+    <div class="initial-content">
+      
+  
+
+
+
+
+
+
+
+<div class="page__hero--overlay"
+  style=" background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('/assets/images/32902732016_430826ec3b_c.jpg');"
+>
+  
+    <div class="wrapper">
+      <h1 id="page-title" class="page__title" itemprop="headline">
+        
+          <code class="language-plaintext highlighter-rouge">concurrency</code> and Performance
+
+        
+      </h1>
+      
+        <p class="page__lead">Testing concurrent code using DejaFu requires the use of <code class="language-plaintext highlighter-rouge">MonadConc</code> and <code class="language-plaintext highlighter-rouge">MonadSTM</code> instead of plain <code class="language-plaintext highlighter-rouge">IO</code> and <code class="language-plaintext highlighter-rouge">STM</code>. Is there any performance impact, and if there is, can it be recovered?
+</p>
+      
+      
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          12 minute read
+        
+      </span>
+    
+  </p>
+
+
+      
+      
+    </div>
+  
+  
+    <span class="page__hero-caption">Photo credit: <a href="https://www.flickr.com/photos/147265682@N02/32902732016/"><strong>Mohan Picz</strong></a>
+</span>
+  
+</div>
+
+
+
+
+
+<div id="main" role="main">
+  
+  <div class="sidebar sticky">
+  
+
+
+<div itemscope itemtype="https://schema.org/Person">
+
+  
+    <div class="author__avatar">
+      
+        <img src="/assets/images/avatar-nicolas.jpg" alt="Nicolas T." itemprop="image">
+      
+    </div>
+  
+
+  <div class="author__content">
+    
+      <h3 class="author__name" itemprop="name">Nicolas T.</h3>
+    
+    
+      <div class="author__bio" itemprop="description">
+        <p>Software guy, former Principal Architect @ Scality. <a href="http://haskell.org">Haskell</a>‘ist, music-lover and startup-minded.</p>
+
+      </div>
+    
+  </div>
+
+  <div class="author__urls-wrapper">
+    <button class="btn btn--inverse">Follow</button>
+    <ul class="author__urls social-icons">
+      
+        <li itemprop="homeLocation" itemscope itemtype="https://schema.org/Place">
+          <i class="fas fa-fw fa-map-marker-alt" aria-hidden="true"></i> <span itemprop="name">🇫🇷 Paris | 🇧🇪 Antwerp</span>
+        </li>
+      
+
+      
+
+      
+
+      
+        <li>
+          <a href="mailto:ikke@nicolast.be">
+            <meta itemprop="email" content="ikke@nicolast.be" />
+            <i class="fas fa-fw fa-envelope-square" aria-hidden="true"></i><span class="label">Email</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+        <li>
+          <a href="https://twitter.com/eikke" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i><span class="label">Twitter</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+        <li>
+          <a href="https://www.linkedin.com/in/nicolastrangez" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span class="label">LinkedIn</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+        <li>
+          <a href="https://github.com/NicolasT" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-github" aria-hidden="true"></i><span class="label">GitHub</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+        <li>
+          <a href="https://stackoverflow.com/users/1285443/nicolas-trangez" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-stack-overflow" aria-hidden="true"></i><span class="label">Stack Overflow</span>
+          </a>
+        </li>
+      
+
+      
+        <li>
+          <a href="https://last.fm/user/eikke" itemprop="sameAs" rel="nofollow noopener noreferrer">
+            <i class="fab fa-fw fa-lastfm-square" aria-hidden="true"></i><span class="label">Last.fm</span>
+          </a>
+        </li>
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      
+
+      <!--
+  <li>
+    <a href="http://link-to-whatever-social-network.com/user/" itemprop="sameAs" rel="nofollow noopener noreferrer">
+      <i class="fas fa-fw" aria-hidden="true"></i> Custom Social Profile Link
+    </a>
+  </li>
+-->
+    </ul>
+  </div>
+</div>
+
+  
+  </div>
+
+
+
+  <article class="page" itemscope itemtype="https://schema.org/CreativeWork">
+    <meta itemprop="headline" content="concurrency and Performance">
+    <meta itemprop="description" content="Testing concurrent code using DejaFu requires the use of MonadConc and MonadSTM instead of plain IO and STM. Is there any performance impact, and if there is, can it be recovered?">
+    <meta itemprop="datePublished" content="2023-04-14T19:54:00+02:00">
+    
+
+    <div class="page__inner-wrap">
+      
+
+      <section class="page__content" itemprop="text">
+        
+        <p>When using <a href="https://hackage.haskell.org/package/dejafu">DejaFu</a> to test concurrent code,
+as introduced in <a href="/development/testing-concurrent-code-using-dejafu/">a previous post</a>,
+the <a href="https://hackage.haskell.org/package/concurrency-1.11.0.2/docs/Control-Monad-Conc-Class.html#t:MonadConc"><code class="language-plaintext highlighter-rouge">MonadConc</code></a>
+and <a href="https://hackage.haskell.org/package/concurrency-1.11.0.2/docs/Control-Monad-STM-Class.html#t:MonadSTM"><code class="language-plaintext highlighter-rouge">MonadSTM</code></a>
+type classes must be used to abstract over
+the implementation of concurrency and STM. In <em>regular</em> code, the types and functions in the
+standard <code class="language-plaintext highlighter-rouge">IO</code> and <code class="language-plaintext highlighter-rouge">STM</code> monads would be used instead. Luckily, there’s an <code class="language-plaintext highlighter-rouge">instance MonadConc IO</code>
+and an <code class="language-plaintext highlighter-rouge">instance MonadSTM STM</code>, so code using the <a href="https://hackage.haskell.org/package/concurrency-1.11.0.2"><code class="language-plaintext highlighter-rouge">concurrency</code></a>
+abstractions will work
+just fine in <code class="language-plaintext highlighter-rouge">IO</code> or <code class="language-plaintext highlighter-rouge">STM</code>, but going through a type class can have a performance impact due to
+a dictionary lookup that comes with it. This was one of the questions raised in the
+<a href="/development/testing-concurrent-code-using-dejafu/#future-work">Future Work</a> section
+of last week’s article.</p>
+
+<p>In the implementation of <code class="language-plaintext highlighter-rouge">MonadConc</code> for <code class="language-plaintext highlighter-rouge">IO</code>, as well as the implementation of <code class="language-plaintext highlighter-rouge">MonadSTM</code> for
+<code class="language-plaintext highlighter-rouge">STM</code>, most if not all functions map directly to their <code class="language-plaintext highlighter-rouge">IO</code> and <code class="language-plaintext highlighter-rouge">STM</code> counterparts from <code class="language-plaintext highlighter-rouge">base</code>
+and <code class="language-plaintext highlighter-rouge">stm</code>. Hence, if we can convince the compiler to emit code not using the type class dictionary
+when using testable functions (i.e., functions using <code class="language-plaintext highlighter-rouge">MonadConc</code> and <code class="language-plaintext highlighter-rouge">MonadSTM</code>) in environments
+where <em>testability</em> is not needed (i.e., when used in <code class="language-plaintext highlighter-rouge">IO</code> and <code class="language-plaintext highlighter-rouge">STM</code>), there should be no
+performance impact.</p>
+
+<p>Since this is a Literate Haskell file, some boilerplate before we continue
+(see <a href="/various/jekyll-literate-haskell/">this article</a> for more
+information on how this works):</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">{- cabal:
+build-depends:
+  , base ^&gt;=4.17
+  , concurrency ^&gt;=1.11.0.2
+  , stm ^&gt;=2.5.1.0
+  , tasty ^&gt;=1.4.3
+  , tasty-bench ^&gt;=0.3.3
+  , tasty-inspection-testing ^&gt;=0.2
+default-language: Haskell2010
+build-tool-depends: markdown-unlit:markdown-unlit
+ghc-options:
+  -pgmL markdown-unlit
+  -rtsopts=all "-with-rtsopts=-T -A32m"
+  -fproc-alignment=64
+  -ddump-simpl
+  -dsuppress-idinfo
+  -dsuppress-coercions
+  -dsuppress-type-applications
+  -dsuppress-uniques
+  -dsuppress-module-prefixes
+-}</span>
+
+<span class="cp">{-# LANGUAGE TemplateHaskell #-}</span>
+
+<span class="kr">module</span> <span class="nn">Main</span> <span class="p">(</span>
+  <span class="nf">main</span><span class="p">,</span>
+  <span class="nf">benchSTM</span><span class="p">,</span>
+  <span class="nf">benchConcurrencyNoInline</span><span class="p">,</span>
+  <span class="nf">benchConcurrency</span><span class="p">,</span>
+  <span class="nf">benchConcurrencySpecialized</span>
+  <span class="p">)</span> <span class="kr">where</span>
+
+<span class="kr">import</span> <span class="k">qualified</span> <span class="nn">Control.Concurrent.STM</span> <span class="k">as</span> <span class="n">STM</span>
+<span class="kr">import</span> <span class="k">qualified</span> <span class="nn">Control.Concurrent.Classy.STM</span> <span class="k">as</span> <span class="n">C</span>
+<span class="kr">import</span> <span class="k">qualified</span> <span class="nn">Control.Monad.Conc.Class</span> <span class="k">as</span> <span class="n">C</span>
+<span class="kr">import</span> <span class="nn">Test.Tasty</span> <span class="p">(</span><span class="kt">TestTree</span><span class="p">,</span> <span class="nf">testGroup</span><span class="p">,</span> <span class="nf">withResource</span><span class="p">)</span>
+<span class="kr">import</span> <span class="nn">Test.Tasty.Bench</span> <span class="p">(</span><span class="kt">Benchmark</span><span class="p">,</span> <span class="nf">bench</span><span class="p">,</span> <span class="nf">bcompare</span><span class="p">,</span> <span class="nf">bgroup</span><span class="p">,</span> <span class="nf">defaultMain</span><span class="p">,</span> <span class="nf">nfIO</span><span class="p">)</span>
+<span class="kr">import</span> <span class="nn">Test.Tasty.Inspection</span> <span class="p">(</span><span class="nf">inspectTest</span><span class="p">,</span> <span class="nf">hasNoTypeClasses</span><span class="p">,</span> <span class="p">(</span><span class="o">==-</span><span class="p">))</span>
+</code></pre></div></div>
+
+<h2 id="benchmark-baseline">Benchmark Baseline</h2>
+
+<p>To start, let’s measure the baseline performance of a very simple STM transaction which takes three
+<code class="language-plaintext highlighter-rouge">TVar Int</code>s, reads the contents of the first two, puts their sum in the third, then reads the
+third and returns the value:</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">benchSTM</span> <span class="o">::</span> <span class="kt">STM</span><span class="o">.</span><span class="kt">TVar</span> <span class="kt">Int</span> <span class="o">-&gt;</span> <span class="kt">STM</span><span class="o">.</span><span class="kt">TVar</span> <span class="kt">Int</span> <span class="o">-&gt;</span> <span class="kt">STM</span><span class="o">.</span><span class="kt">TVar</span> <span class="kt">Int</span> <span class="o">-&gt;</span> <span class="kt">STM</span><span class="o">.</span><span class="kt">STM</span> <span class="kt">Int</span>
+<span class="n">benchSTM</span> <span class="n">v1</span> <span class="n">v2</span> <span class="n">v3</span> <span class="o">=</span> <span class="kr">do</span>
+  <span class="n">v1'</span> <span class="o">&lt;-</span> <span class="kt">STM</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v1</span>
+  <span class="n">v2'</span> <span class="o">&lt;-</span> <span class="kt">STM</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v2</span>
+  <span class="kt">STM</span><span class="o">.</span><span class="n">writeTVar</span> <span class="n">v3</span> <span class="o">$!</span> <span class="n">v1'</span> <span class="o">+</span> <span class="n">v2'</span>
+  <span class="kt">STM</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v3</span>
+
+<span class="n">benchConcurrencyNoInline</span> <span class="o">::</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">MonadSTM</span> <span class="n">stm</span> <span class="o">=&gt;</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">TVar</span> <span class="n">stm</span> <span class="kt">Int</span> <span class="o">-&gt;</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">TVar</span> <span class="n">stm</span> <span class="kt">Int</span> <span class="o">-&gt;</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">TVar</span> <span class="n">stm</span> <span class="kt">Int</span> <span class="o">-&gt;</span>
+  <span class="n">stm</span> <span class="kt">Int</span>
+<span class="n">benchConcurrencyNoInline</span> <span class="n">v1</span> <span class="n">v2</span> <span class="n">v3</span> <span class="o">=</span> <span class="kr">do</span>
+  <span class="n">v1'</span> <span class="o">&lt;-</span> <span class="kt">C</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v1</span>
+  <span class="n">v2'</span> <span class="o">&lt;-</span> <span class="kt">C</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v2</span>
+  <span class="kt">C</span><span class="o">.</span><span class="n">writeTVar</span> <span class="n">v3</span> <span class="o">$!</span> <span class="n">v1'</span> <span class="o">+</span> <span class="n">v2'</span>
+  <span class="kt">C</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v3</span>
+<span class="cp">{-# NOINLINE benchConcurrencyNoInline #-}</span>
+
+<span class="n">withVars</span><span class="o">::</span> <span class="p">(</span><span class="kt">IO</span> <span class="p">(</span><span class="kt">STM</span><span class="o">.</span><span class="kt">TVar</span> <span class="kt">Int</span><span class="p">,</span> <span class="kt">STM</span><span class="o">.</span><span class="kt">TVar</span> <span class="kt">Int</span><span class="p">,</span> <span class="kt">STM</span><span class="o">.</span><span class="kt">TVar</span> <span class="kt">Int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">TestTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">TestTree</span>
+<span class="n">withVars</span> <span class="o">=</span> <span class="n">withResource</span> <span class="n">mkTVars</span> <span class="p">(</span><span class="n">const</span> <span class="o">$</span> <span class="n">pure</span> <span class="nb">()</span><span class="p">)</span>
+  <span class="kr">where</span>
+    <span class="n">mkTVars</span> <span class="o">=</span> <span class="p">(,,)</span> <span class="o">&lt;$&gt;</span> <span class="kt">STM</span><span class="o">.</span><span class="n">newTVarIO</span> <span class="mi">1</span>
+                   <span class="o">&lt;*&gt;</span> <span class="kt">STM</span><span class="o">.</span><span class="n">newTVarIO</span> <span class="mi">2</span>
+                   <span class="o">&lt;*&gt;</span> <span class="kt">STM</span><span class="o">.</span><span class="n">newTVarIO</span> <span class="mi">0</span>
+
+<span class="n">benchSTMvsBenchConcurrencyNoInline</span> <span class="o">::</span> <span class="kt">Benchmark</span>
+<span class="n">benchSTMvsBenchConcurrencyNoInline</span> <span class="o">=</span> <span class="n">withVars</span> <span class="o">$</span> <span class="nf">\</span><span class="n">getVars</span> <span class="o">-&gt;</span> <span class="n">testGroup</span> <span class="s">"baseline"</span> <span class="p">[</span>
+    <span class="n">bench</span> <span class="s">"STM"</span> <span class="o">$</span> <span class="n">nfIO</span> <span class="o">$</span> <span class="n">getVars</span> <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v3</span><span class="p">)</span> <span class="o">-&gt;</span>
+      <span class="kt">STM</span><span class="o">.</span><span class="n">atomically</span> <span class="o">$</span> <span class="n">benchSTM</span> <span class="n">v1</span> <span class="n">v2</span> <span class="n">v3</span><span class="p">,</span>
+    <span class="n">bcompare</span> <span class="s">"STM"</span> <span class="o">$</span>
+      <span class="n">bench</span> <span class="s">"ConcurrencyNoInline"</span> <span class="o">$</span> <span class="n">nfIO</span> <span class="o">$</span> <span class="n">getVars</span> <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v3</span><span class="p">)</span> <span class="o">-&gt;</span>
+        <span class="kt">C</span><span class="o">.</span><span class="n">atomically</span> <span class="o">$</span> <span class="n">benchConcurrencyNoInline</span> <span class="n">v1</span> <span class="n">v2</span> <span class="n">v3</span>
+  <span class="p">]</span>
+</code></pre></div></div>
+
+<p>Running this benchmark yields not-so-stellar results:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  baseline
+    STM:                 OK (0.40s)
+      45.4 ns ± 4.2 ns,  63 B  allocated,   0 B  copied,  34 MB peak memory
+    ConcurrencyNoInline: OK (0.27s)
+      126  ns ± 5.5 ns, 505 B  allocated,   0 B  copied,  34 MB peak memory, 2.78x
+</code></pre></div></div>
+
+<h2 id="automatic-specialization">Automatic Specialization</h2>
+
+<p>The <code class="language-plaintext highlighter-rouge">NOINLINE</code> pragma on <code class="language-plaintext highlighter-rouge">benchConcurrencyNoInline</code> prohibits GHC to inline the
+code (in the benchmark), otherwise specialization could trigger.</p>
+
+<p>If we create a version of the code without the <code class="language-plaintext highlighter-rouge">INLINE</code> pragma and benchmark it again,
+it appears the code performs roughly the same as the native <code class="language-plaintext highlighter-rouge">STM</code> version:</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">benchConcurrency</span> <span class="o">::</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">MonadSTM</span> <span class="n">stm</span> <span class="o">=&gt;</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">TVar</span> <span class="n">stm</span> <span class="kt">Int</span> <span class="o">-&gt;</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">TVar</span> <span class="n">stm</span> <span class="kt">Int</span> <span class="o">-&gt;</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">TVar</span> <span class="n">stm</span> <span class="kt">Int</span> <span class="o">-&gt;</span>
+  <span class="n">stm</span> <span class="kt">Int</span>
+<span class="n">benchConcurrency</span> <span class="n">v1</span> <span class="n">v2</span> <span class="n">v3</span> <span class="o">=</span> <span class="kr">do</span>
+  <span class="n">v1'</span> <span class="o">&lt;-</span> <span class="kt">C</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v1</span>
+  <span class="n">v2'</span> <span class="o">&lt;-</span> <span class="kt">C</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v2</span>
+  <span class="kt">C</span><span class="o">.</span><span class="n">writeTVar</span> <span class="n">v3</span> <span class="o">$!</span> <span class="n">v1'</span> <span class="o">+</span> <span class="n">v2'</span>
+  <span class="kt">C</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v3</span>
+
+<span class="n">benchSTMvsBenchConcurrency</span> <span class="o">::</span> <span class="kt">Benchmark</span>
+<span class="n">benchSTMvsBenchConcurrency</span> <span class="o">=</span> <span class="n">withVars</span> <span class="o">$</span> <span class="nf">\</span><span class="n">getVars</span> <span class="o">-&gt;</span> <span class="n">testGroup</span> <span class="s">"plain"</span> <span class="p">[</span>
+    <span class="n">bcompare</span> <span class="s">"STM"</span> <span class="o">$</span>
+      <span class="n">bench</span> <span class="s">"Concurrency"</span> <span class="o">$</span> <span class="n">nfIO</span> <span class="o">$</span> <span class="n">getVars</span> <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v3</span><span class="p">)</span> <span class="o">-&gt;</span>
+        <span class="kt">C</span><span class="o">.</span><span class="n">atomically</span> <span class="o">$</span> <span class="n">benchConcurrency</span> <span class="n">v1</span> <span class="n">v2</span> <span class="n">v3</span>
+  <span class="p">]</span>
+</code></pre></div></div>
+
+<p>yields</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  plain
+    Concurrency:         OK (0.39s)
+      45.8 ns ± 3.4 ns,  63 B  allocated,   0 B  copied,  35 MB peak memory, 1.01x
+</code></pre></div></div>
+
+<p>Why does this happen, and can we be certain this is not a fluke?</p>
+
+<h2 id="inspecting-core">Inspecting Core</h2>
+<p>To investigate, we can pass some options to GHC so it prints the <em>Core</em> it generates. <em>Core</em> is a
+language somewhat like a very simplified version of Haskell, without type classes (which are
+desugared into dictionaries at this point), that can then be compiled into even more low-level
+languages before binary code is generated. Here are the important bits:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>benchSTM1
+  :: TVar Int
+     -&gt; TVar Int
+     -&gt; TVar Int
+     -&gt; State# RealWorld
+     -&gt; (# State# RealWorld, Int #)
+benchSTM1
+  = \ (v1 :: TVar Int)
+      (v2 :: TVar Int)
+      (v3 :: TVar Int)
+      (s :: State# RealWorld) -&gt;
+      case v1 of { TVar tvar# -&gt;
+      case readTVar# tvar# s of { (# ipv, ipv1 #) -&gt;
+      case v2 of { TVar tvar#1 -&gt;
+      case readTVar# tvar#1 ipv of { (# ipv2, ipv3 #) -&gt;
+      case ipv1 of { I# x -&gt;
+      case ipv3 of { I# y -&gt;
+      case v3 of { TVar tvar#2 -&gt;
+      case writeTVar# tvar#2 (I# (+# x y)) ipv2 of s2# { __DEFAULT -&gt;
+      readTVar# tvar#2 s2#
+      }
+      }
+      }
+      }
+      }
+      }
+      }
+      }
+
+benchSTM :: TVar Int -&gt; TVar Int -&gt; TVar Int -&gt; STM Int
+benchSTM
+  = benchSTM1
+    `cast` &lt;Co:15&gt; :: (TVar Int
+                       -&gt; TVar Int
+                       -&gt; TVar Int
+                       -&gt; State# RealWorld
+                       -&gt; (# State# RealWorld, Int #))
+                      ~R# (TVar Int -&gt; TVar Int -&gt; TVar Int -&gt; STM Int)
+</code></pre></div></div>
+
+<p>With a bit of imagination, we can see <code class="language-plaintext highlighter-rouge">benchSTM1</code> resembles our original <code class="language-plaintext highlighter-rouge">benchSTM</code> code,
+in a state monad over <code class="language-plaintext highlighter-rouge">State# RealWorld</code>. Keep in mind <code class="language-plaintext highlighter-rouge">TVar</code> is a
+<code class="language-plaintext highlighter-rouge">newtype</code> constructor over the compiler-internal representation of a <code class="language-plaintext highlighter-rouge">TVar</code> (which is
+<code class="language-plaintext highlighter-rouge">TVar# RealWorld a</code>), and <code class="language-plaintext highlighter-rouge">readTVar#</code> and friends are alike <code class="language-plaintext highlighter-rouge">readTVar</code>, but for the
+internal <code class="language-plaintext highlighter-rouge">TVar#</code> type.</p>
+
+<p><code class="language-plaintext highlighter-rouge">benchSTM</code> is <code class="language-plaintext highlighter-rouge">benchSTM1</code> <code class="language-plaintext highlighter-rouge">cast</code>ed to plain <code class="language-plaintext highlighter-rouge">STM</code> (which is, like <code class="language-plaintext highlighter-rouge">IO</code>, a <code class="language-plaintext highlighter-rouge">newtype</code> of
+<code class="language-plaintext highlighter-rouge">State# RealWorld -&gt; (# State# RealWorld, a #)</code>).</p>
+
+<p>Here’s <code class="language-plaintext highlighter-rouge">benchConcurrencyNoInline</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>benchConcurrencyNoInline
+  :: forall (stm :: * -&gt; *).
+     MonadSTM stm =&gt;
+     TVar stm Int -&gt; TVar stm Int -&gt; TVar stm Int -&gt; stm Int
+benchConcurrencyNoInline
+  = \ (@(stm :: * -&gt; *)) ($dMonadSTM :: MonadSTM stm) -&gt;
+      let {
+        $dMonad :: MonadPlus stm
+        $dMonad = $p2MonadSTM $dMonadSTM } in
+      let {
+        $dMonad1 :: Monad stm
+        $dMonad1 = $p2MonadPlus $dMonad } in
+      \ (v1 :: TVar stm Int) (v2 :: TVar stm Int) (v3 :: TVar stm Int) -&gt;
+        let {
+          lvl15 :: stm Int
+          lvl15 = readTVar $dMonadSTM v2 } in
+        let {
+          lvl16 :: stm Int
+          lvl16 = readTVar $dMonadSTM v3 } in
+        &gt;&gt;=
+          $dMonad1
+          (readTVar $dMonadSTM v1)
+          (\ (v1' :: Int) -&gt;
+             &gt;&gt;=
+               $dMonad1
+               lvl15
+               (\ (v2' :: Int) -&gt;
+                  &gt;&gt;
+                    $dMonad1
+                    (case v1' of { I# x -&gt;
+                     case v2' of { I# y -&gt; writeTVar $dMonadSTM v3 (I# (+# x y)) }
+                     })
+                    lvl16))
+</code></pre></div></div>
+
+<p>Here, the <code class="language-plaintext highlighter-rouge">MonadSTM</code> dictionary is passed along (and then unpacked to retrieve the <code class="language-plaintext highlighter-rouge">MonadPlus</code>
+and <code class="language-plaintext highlighter-rouge">Monad</code> instances as well), and every call to, e.g., <code class="language-plaintext highlighter-rouge">readTVar</code> becomes a field lookup
+from the dictionary (<code class="language-plaintext highlighter-rouge">readTVar $dMonadSTM</code> is like a regular field lookup in a <code class="language-plaintext highlighter-rouge">data</code> record),
+hence an indirect call. Also, the monadic binds (<code class="language-plaintext highlighter-rouge">&gt;&gt;=</code> and <code class="language-plaintext highlighter-rouge">&gt;&gt;</code>) can’t be expanded as is the
+case in <code class="language-plaintext highlighter-rouge">benchSTM</code>. It seems pretty clear why <code class="language-plaintext highlighter-rouge">benchConcurrencyNoInline</code> performs about 2.78x
+slower than <code class="language-plaintext highlighter-rouge">benchSTM</code>!</p>
+
+<p>Last but not least, the code GHC generates for <code class="language-plaintext highlighter-rouge">benchConcurrency</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>benchConcurrency
+  :: forall (stm :: * -&gt; *).
+     MonadSTM stm =&gt;
+     TVar stm Int -&gt; TVar stm Int -&gt; TVar stm Int -&gt; stm Int
+benchConcurrency
+  = \ (@(stm :: * -&gt; *)) ($dMonadSTM :: MonadSTM stm) -&gt;
+      let {
+        $dMonad :: MonadPlus stm
+        $dMonad = $p2MonadSTM $dMonadSTM } in
+      let {
+        $dMonad1 :: Monad stm
+        $dMonad1 = $p2MonadPlus $dMonad } in
+      \ (v1 :: TVar stm Int) (v2 :: TVar stm Int) (v3 :: TVar stm Int) -&gt;
+        let {
+          lvl15 :: stm Int
+          lvl15 = readTVar $dMonadSTM v2 } in
+        let {
+          lvl16 :: stm Int
+          lvl16 = readTVar $dMonadSTM v3 } in
+        &gt;&gt;=
+          $dMonad1
+          (readTVar $dMonadSTM v1)
+          (\ (v1' :: Int) -&gt;
+             &gt;&gt;=
+               $dMonad1
+               lvl15
+               (\ (v2' :: Int) -&gt;
+                  &gt;&gt;
+                    $dMonad1
+                    (case v1' of { I# x -&gt;
+                     case v2' of { I# y -&gt; writeTVar $dMonadSTM v3 (I# (+# x y)) }
+                     })
+                    lvl16))
+</code></pre></div></div>
+
+<p>This looks… suspiciously similar to the <code class="language-plaintext highlighter-rouge">benchConcurrencyNoInline</code> code. But when running
+the benchmark, the performance of the regular version was aligned with the <code class="language-plaintext highlighter-rouge">benchSTM</code> code.
+What’s going on?</p>
+
+<p>It turns out GHC spotted an opportunity for specialization, and performed the following two
+steps:</p>
+
+<ul>
+  <li>It created a specialized version of the function:</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>benchConcurrency1
+  :: TVar STM Int
+     -&gt; TVar STM Int
+     -&gt; TVar STM Int
+     -&gt; State# RealWorld
+     -&gt; (# State# RealWorld, Int #)
+benchConcurrency1
+  = \ (v1 :: TVar STM Int)
+      (v2 :: TVar STM Int)
+      (v3 :: TVar STM Int)
+      (eta :: State# RealWorld) -&gt;
+      case v1 `cast` &lt;Co:3&gt; :: TVar STM Int ~R# TVar Int of
+      { TVar tvar# -&gt;
+      case readTVar# tvar# eta of { (# ipv, ipv1 #) -&gt;
+      case v2 `cast` &lt;Co:3&gt; :: TVar STM Int ~R# TVar Int of
+      { TVar tvar#1 -&gt;
+      case readTVar# tvar#1 ipv of { (# ipv2, ipv3 #) -&gt;
+      case ipv1 of { I# x -&gt;
+      case ipv3 of { I# y -&gt;
+      case v3 `cast` &lt;Co:3&gt; :: TVar STM Int ~R# TVar Int of
+      { TVar tvar#2 -&gt;
+      case writeTVar# tvar#2 (I# (+# x y)) ipv2 of s2# { __DEFAULT -&gt;
+      readTVar# tvar#2 s2#
+      }
+      }
+      }
+      }
+      }
+      }
+      }
+      }
+</code></pre></div></div>
+
+<p>Note this is, modulo some different but related <code class="language-plaintext highlighter-rouge">cast</code> invocations (which have no runtime impact)
+the very same as <code class="language-plaintext highlighter-rouge">benchSTM1</code>. Indeed, this is a specialized version of <code class="language-plaintext highlighter-rouge">benchConcurrency</code> for
+<code class="language-plaintext highlighter-rouge">TVar STM Int -&gt; TVar STM Int -&gt; TVar STM Int -&gt; STM Int</code>, i.e., when using <code class="language-plaintext highlighter-rouge">benchConcurrency</code>
+in the regular <code class="language-plaintext highlighter-rouge">STM</code> monad.</p>
+
+<ul>
+  <li>It created a rule to rewrite calls to <code class="language-plaintext highlighter-rouge">benchConcurrency</code>, when used in the <code class="language-plaintext highlighter-rouge">STM</code> monad, to
+<code class="language-plaintext highlighter-rouge">benchConcurrency1</code>:</li>
+</ul>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"SPEC benchConcurrency @STM"
+    forall ($dMonadSTM :: MonadSTM STM).
+      benchConcurrency $dMonadSTM
+      = benchConcurrency1
+        `cast` &lt;Co:18&gt; :: (TVar STM Int
+                           -&gt; TVar STM Int
+                           -&gt; TVar STM Int
+                           -&gt; State# RealWorld
+                           -&gt; (# State# RealWorld, Int #))
+                          ~R# (TVar STM Int -&gt; TVar STM Int -&gt; TVar STM Int -&gt; STM Int)
+</code></pre></div></div>
+
+<p>Note the <code class="language-plaintext highlighter-rouge">$dMonadSTM</code> dictionary isn’t used on the right hand side of the rewrite rule,
+so we can be certain no indirections through the <code class="language-plaintext highlighter-rouge">MonadSTM</code> dictionary can be used in
+<code class="language-plaintext highlighter-rouge">benchConcurrency1</code>.</p>
+
+<p>When inspecting the actual benchmark code, we can see a call to <code class="language-plaintext highlighter-rouge">benchConcurrency1</code> is
+used instead of a call to <code class="language-plaintext highlighter-rouge">benchConcurrency</code>, and hence, we get the very same performance as the
+<code class="language-plaintext highlighter-rouge">benchSTM</code> version:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{ (# ipv, ipv1 #) -&gt;
+case ipv1 of { (v1, v2, v3) -&gt;
+case atomically#
+       (benchConcurrency1
+          (v1 `cast` &lt;Co:4&gt; :: TVar Int ~R# TVar STM Int)
+          (v2 `cast` &lt;Co:4&gt; :: TVar Int ~R# TVar STM Int)
+          (v3 `cast` &lt;Co:4&gt; :: TVar Int ~R# TVar STM Int))
+       ipv
+</code></pre></div></div>
+
+<h2 id="explicit-specialization">Explicit Specialization</h2>
+
+<p>Great, GHC is able to specialize <code class="language-plaintext highlighter-rouge">MonadSTM</code> code to the equivalent <code class="language-plaintext highlighter-rouge">STM</code> code when it
+spots an opportunity to do so. However, this only works within a single module: if <code class="language-plaintext highlighter-rouge">benchConcurrency</code> were
+defined in one module, and used from another to benchmark it, the implementation of
+<code class="language-plaintext highlighter-rouge">benchConcurrency</code> is no longer visible to GHC, except if it decided the function is small enough
+to be inlineable, or we told it (with the <code class="language-plaintext highlighter-rouge">INLINE</code> pragma) to do so. Many <code class="language-plaintext highlighter-rouge">STM</code> functions are
+relatively large though, so we don’t necessarily want to inline them. What to do?</p>
+
+<p>As a library author, we can force GHC to create specialized versions of some code for us, and
+generate the according rewrite rule as well, as if it decided to do so by itself within a single
+module. Let’s give this a try:</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">benchConcurrencySpecialized</span> <span class="o">::</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">MonadSTM</span> <span class="n">stm</span> <span class="o">=&gt;</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">TVar</span> <span class="n">stm</span> <span class="kt">Int</span> <span class="o">-&gt;</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">TVar</span> <span class="n">stm</span> <span class="kt">Int</span> <span class="o">-&gt;</span>
+  <span class="kt">C</span><span class="o">.</span><span class="kt">TVar</span> <span class="n">stm</span> <span class="kt">Int</span> <span class="o">-&gt;</span>
+  <span class="n">stm</span> <span class="kt">Int</span>
+<span class="n">benchConcurrencySpecialized</span> <span class="n">v1</span> <span class="n">v2</span> <span class="n">v3</span> <span class="o">=</span> <span class="kr">do</span>
+  <span class="n">v1'</span> <span class="o">&lt;-</span> <span class="kt">C</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v1</span>
+  <span class="n">v2'</span> <span class="o">&lt;-</span> <span class="kt">C</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v2</span>
+  <span class="kt">C</span><span class="o">.</span><span class="n">writeTVar</span> <span class="n">v3</span> <span class="o">$!</span> <span class="n">v1'</span> <span class="o">+</span> <span class="n">v2'</span>
+  <span class="kt">C</span><span class="o">.</span><span class="n">readTVar</span> <span class="n">v3</span>
+<span class="cp">{-# SPECIALIZE benchConcurrencySpecialized ::
+      STM.TVar Int -&gt; STM.TVar Int -&gt; STM.TVar Int -&gt; STM.STM Int #-}</span>
+
+<span class="n">benchSTMvsBenchConcurrencySpecialized</span> <span class="o">::</span> <span class="kt">Benchmark</span>
+<span class="n">benchSTMvsBenchConcurrencySpecialized</span> <span class="o">=</span> <span class="n">withVars</span> <span class="o">$</span> <span class="nf">\</span><span class="n">getVars</span> <span class="o">-&gt;</span> <span class="n">testGroup</span> <span class="s">"specialized"</span> <span class="p">[</span>
+    <span class="n">bcompare</span> <span class="s">"STM"</span> <span class="o">$</span>
+      <span class="n">bench</span> <span class="s">"ConcurrencySpecialized"</span> <span class="o">$</span> <span class="n">nfIO</span> <span class="o">$</span> <span class="n">getVars</span> <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">,</span> <span class="n">v3</span><span class="p">)</span> <span class="o">-&gt;</span>
+        <span class="kt">C</span><span class="o">.</span><span class="n">atomically</span> <span class="o">$</span> <span class="n">benchConcurrencySpecialized</span> <span class="n">v1</span> <span class="n">v2</span> <span class="n">v3</span>
+  <span class="p">]</span>
+</code></pre></div></div>
+
+<p>Note the use of the <code class="language-plaintext highlighter-rouge">SPECIALIZE</code> pragma above. Running this gives</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  specialized
+    ConcurrencySpecialized: OK (0.20s)
+      47.9 ns ± 4.4 ns,  63 B  allocated,   0 B  copied,  35 MB peak memory, 1.03x
+</code></pre></div></div>
+
+<p>Furthermore, the following <em>Core</em> is generated:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>benchConcurrencySpecialized
+  :: forall (stm :: * -&gt; *).
+     MonadSTM stm =&gt;
+     TVar stm Int -&gt; TVar stm Int -&gt; TVar stm Int -&gt; stm Int
+benchConcurrencySpecialized
+  = \ (@(stm :: * -&gt; *)) ($dMonadSTM :: MonadSTM stm) -&gt;
+      let {
+        $dMonad :: MonadPlus stm
+        $dMonad = $p2MonadSTM $dMonadSTM } in
+      let {
+        $dMonad1 :: Monad stm
+        $dMonad1 = $p2MonadPlus $dMonad } in
+      \ (v1 :: TVar stm Int) (v2 :: TVar stm Int) (v3 :: TVar stm Int) -&gt;
+        let {
+          lvl19 :: stm Int
+          lvl19 = readTVar $dMonadSTM v2 } in
+        let {
+          lvl20 :: stm Int
+          lvl20 = readTVar $dMonadSTM v3 } in
+        &gt;&gt;=
+          $dMonad1
+          (readTVar $dMonadSTM v1)
+          (\ (v1' :: Int) -&gt;
+             &gt;&gt;=
+               $dMonad1
+               lvl19
+               (\ (v2' :: Int) -&gt;
+                  &gt;&gt;
+                    $dMonad1
+                    (case v1' of { I# x -&gt;
+                     case v2' of { I# y -&gt; writeTVar $dMonadSTM v3 (I# (+# x y)) }
+                     })
+                    lvl20))
+
+"SPEC benchConcurrencySpecialized"
+    forall ($dMonadSTM :: MonadSTM STM).
+      benchConcurrencySpecialized $dMonadSTM
+      = benchConcurrency1
+        `cast` &lt;Co:18&gt; :: (TVar STM Int
+                           -&gt; TVar STM Int
+                           -&gt; TVar STM Int
+                           -&gt; State# RealWorld
+                           -&gt; (# State# RealWorld, Int #))
+                          ~R# (TVar STM Int -&gt; TVar STM Int -&gt; TVar STM Int -&gt; STM Int)
+</code></pre></div></div>
+
+<p>The compiler detected the specialized version of <code class="language-plaintext highlighter-rouge">benchConcurrencySpecialized</code> for <code class="language-plaintext highlighter-rouge">STM</code>
+is the very same as the specialized version it already created for <code class="language-plaintext highlighter-rouge">benchConcurrency</code>, so
+<code class="language-plaintext highlighter-rouge">benchConcurrency1</code> gets simply reused.</p>
+
+<p>With the <code class="language-plaintext highlighter-rouge">SPECIALIZE</code> pragma in place, we can write and test code using <code class="language-plaintext highlighter-rouge">MonadSTM</code>, whilst
+at the same time guaranteeing that users of the library using plain <code class="language-plaintext highlighter-rouge">STM</code> code won’t incur
+any performance hit.</p>
+
+<h2 id="testing">Testing</h2>
+
+<p>We can even go one step further, and ensure <code class="language-plaintext highlighter-rouge">MonadSTM</code> usage is completely erased: in a test
+using the <a href="https://hackage.haskell.org/package/inspection-testing-0.5.0.1"><code class="language-plaintext highlighter-rouge">inspection-testing</code></a>
+library. Even more, we can check whether two versions of a
+function using our library function are (after inlining) the same:</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">stmVersion</span> <span class="o">::</span> <span class="kt">IO</span> <span class="nb">()</span>
+<span class="n">stmVersion</span> <span class="o">=</span> <span class="kr">do</span>
+  <span class="n">v</span> <span class="o">&lt;-</span> <span class="kt">STM</span><span class="o">.</span><span class="n">newTVarIO</span> <span class="mi">0</span>
+  <span class="kr">_</span> <span class="o">&lt;-</span> <span class="kt">STM</span><span class="o">.</span><span class="n">atomically</span> <span class="o">$</span> <span class="n">benchSTM</span> <span class="n">v</span> <span class="n">v</span> <span class="n">v</span>
+  <span class="n">pure</span> <span class="nb">()</span>
+
+<span class="n">concurrencyVersion</span> <span class="o">::</span> <span class="kt">IO</span> <span class="nb">()</span>
+<span class="n">concurrencyVersion</span> <span class="o">=</span> <span class="kr">do</span>
+  <span class="n">v</span> <span class="o">&lt;-</span> <span class="kt">STM</span><span class="o">.</span><span class="n">newTVarIO</span> <span class="mi">0</span>
+  <span class="kr">_</span> <span class="o">&lt;-</span> <span class="kt">STM</span><span class="o">.</span><span class="n">atomically</span> <span class="o">$</span> <span class="n">benchConcurrencySpecialized</span> <span class="n">v</span> <span class="n">v</span> <span class="n">v</span>
+  <span class="n">pure</span> <span class="nb">()</span>
+
+<span class="n">testMonadSTMErased</span> <span class="o">::</span> <span class="kt">TestTree</span>
+<span class="n">testMonadSTMErased</span> <span class="o">=</span> <span class="o">$</span><span class="p">(</span><span class="n">inspectTest</span> <span class="o">$</span> <span class="n">hasNoTypeClasses</span> <span class="n">'concurrencyVersion</span><span class="p">)</span>
+
+<span class="n">testFunctionsEqual</span> <span class="o">::</span> <span class="kt">TestTree</span>
+<span class="n">testFunctionsEqual</span> <span class="o">=</span> <span class="o">$</span><span class="p">(</span><span class="n">inspectTest</span> <span class="o">$</span> <span class="n">'concurrencyVersion</span> <span class="o">==-</span> <span class="n">'stmVersion</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  concurrencyVersion does not contain dictionary values: OK
+  concurrencyVersion ==- stmVersion:                     OK
+</code></pre></div></div>
+
+<p>Success!</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>This article showns how, with liberal use of <code class="language-plaintext highlighter-rouge">SPECIALIZE</code> pragmas in library code,
+it’s possible to eliminate the overhead of <code class="language-plaintext highlighter-rouge">MonadConc</code> and <code class="language-plaintext highlighter-rouge">MonadSTM</code> when library functions
+are used in the regular <code class="language-plaintext highlighter-rouge">IO</code> and <code class="language-plaintext highlighter-rouge">STM</code> monads. Hence, let this be a call to library authors
+to write their code using <code class="language-plaintext highlighter-rouge">MonadConc</code> and <code class="language-plaintext highlighter-rouge">MonadSTM</code> such that consumers of the library
+can still write DejaFu tests for code using data structures and functions defined in it!</p>
+
+<h3 id="wrapping-up">Wrapping Up</h3>
+
+<p>To wrap up, run all benchmarks and tests:</p>
+
+<div class="language-haskell highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">main</span> <span class="o">::</span> <span class="kt">IO</span> <span class="nb">()</span>
+<span class="n">main</span> <span class="o">=</span> <span class="n">defaultMain</span> <span class="p">[</span>
+  <span class="n">benchSTMvsBenchConcurrencyNoInline</span><span class="p">,</span>
+  <span class="n">benchSTMvsBenchConcurrency</span><span class="p">,</span>
+  <span class="n">benchSTMvsBenchConcurrencySpecialized</span><span class="p">,</span>
+  <span class="n">testMonadSTMErased</span><span class="p">,</span>
+  <span class="n">testFunctionsEqual</span>
+  <span class="p">]</span>
+</code></pre></div></div>
+
+        
+      </section>
+
+      <footer class="page__meta">
+        
+        
+
+
+  
+
+
+  
+
+  <p class="page__taxonomy">
+    <strong><i class="fas fa-fw fa-folder-open" aria-hidden="true"></i> Categories: </strong>
+    <span itemprop="keywords">
+    
+      <a href="/categories/#development" class="page__taxonomy-item" rel="tag">Development</a>
+    
+    </span>
+  </p>
+
+
+        
+
+  <p class="page__date"><strong><i class="fas fa-fw fa-calendar-alt" aria-hidden="true"></i> Updated:</strong> <time datetime="2023-04-14T19:54:00+02:00">April 14, 2023</time></p>
+
+
+      </footer>
+
+      <section class="page__share">
+  
+    <h4 class="page__share-title">Share on</h4>
+  
+
+  <a href="https://twitter.com/intent/tweet?via=eikke&text=%60concurrency%60+and+Performance%20https%3A%2F%2Fnicolast.be%2Fdevelopment%2Fconcurrency-and-performance%2F" class="btn btn--twitter" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Twitter"><i class="fab fa-fw fa-twitter" aria-hidden="true"></i><span> Twitter</span></a>
+
+  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fnicolast.be%2Fdevelopment%2Fconcurrency-and-performance%2F" class="btn btn--facebook" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on Facebook"><i class="fab fa-fw fa-facebook" aria-hidden="true"></i><span> Facebook</span></a>
+
+  <a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3A%2F%2Fnicolast.be%2Fdevelopment%2Fconcurrency-and-performance%2F" class="btn btn--linkedin" onclick="window.open(this.href, 'window', 'left=20,top=20,width=500,height=500,toolbar=1,resizable=0'); return false;" title="Share on LinkedIn"><i class="fab fa-fw fa-linkedin" aria-hidden="true"></i><span> LinkedIn</span></a>
+</section>
+
+
+      
+  <nav class="pagination">
+    
+      <a href="/various/jekyll-literate-haskell/" class="pagination--pager" title="Using Literate Haskell with Jekyll
+">Previous</a>
+    
+    
+      <a href="#" class="pagination--pager disabled">Next</a>
+    
+  </nav>
+
+    </div>
+
+    
+  </article>
+
+  
+  
+    <div class="page__related">
+      <h4 class="page__related-title">You may also enjoy</h4>
+      <div class="grid__wrapper">
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/various/jekyll-literate-haskell/" rel="permalink">Using Literate Haskell with Jekyll
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          4 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">With a little bit of configuration, Haskell code in Jekyll articles can be executed or loaded in a REPL: a great way to ensure the code actually works!
+</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/development/testing-concurrent-code-using-dejafu/" rel="permalink">Testing concurrent code using DejaFu
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          11 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Writing correct concurrent code with shared mutable state is hard. Testing concurrent code with shared mutable state is hard. In Haskell, we can use STM to t...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/development/xinu-a-haskell-experiment/" rel="permalink">xinU, a Haskell Experiment
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          7 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Thanks to its extensive FFI support, Haskell is a great platform to develop system applications. The unix library exposes a large set of POSIX APIs to Haskel...</p>
+  </article>
+</div>
+
+        
+          
+
+
+
+<div class="grid__item">
+  <article class="archive__item" itemscope itemtype="https://schema.org/CreativeWork">
+    
+    <h2 class="archive__item-title no_toc" itemprop="headline">
+      
+        <a href="/development/a-git-branching-model-for-releases-with-generated-files/" rel="permalink">A Git Branching Model for Releases with Generated Files
+</a>
+      
+    </h2>
+    
+
+  <p class="page__meta">
+    
+
+    
+
+    
+      
+      
+
+      <span class="page__meta-readtime">
+        <i class="far fa-clock" aria-hidden="true"></i>
+        
+          3 minute read
+        
+      </span>
+    
+  </p>
+
+
+    <p class="archive__item-excerpt" itemprop="description">Version Control Systems and generated files don’t play nice together, though for some projects such files need to be included in release packages. This artic...</p>
+  </article>
+</div>
+
+        
+      </div>
+    </div>
+  
+  
+</div>
+
+    </div>
+
+    
+
+    <div id="footer" class="page__footer">
+      <footer>
+        <!-- start custom footer snippets -->
+
+<!-- end custom footer snippets -->
+        <div class="page__footer-follow">
+  <ul class="social-icons">
+    
+      <li><strong>Follow:</strong></li>
+    
+
+    
+      
+        
+          <li><a href="https://twitter.com/eikke" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-twitter-square" aria-hidden="true"></i> Twitter</a></li>
+        
+      
+        
+          <li><a href="https://github.com/NicolasT" rel="nofollow noopener noreferrer"><i class="fab fa-fw fa-github" aria-hidden="true"></i> GitHub</a></li>
+        
+      
+    
+
+    
+      <li><a href="/feed.xml"><i class="fas fa-fw fa-rss-square" aria-hidden="true"></i> Feed</a></li>
+    
+  </ul>
+</div>
+
+<div class="page__footer-copyright">&copy; 2023 Nicolas Trangez. Powered by <a href="https://jekyllrb.com" rel="nofollow">Jekyll</a> &amp; <a href="https://mademistakes.com/work/minimal-mistakes-jekyll-theme/" rel="nofollow">Minimal Mistakes</a>.</div>
+
+      </footer>
+    </div>
+
+    
+  <script src="/assets/js/main.min.js"></script>
+
+
+
+
+
+
+
+  <script>
+  window.ga=function(){ga.q.push(arguments)};ga.q=[];ga.l=+new Date;
+  ga('create','UA-91109342-1','auto');
+  ga('set', 'anonymizeIp', false);
+  ga('send','pageview')
+</script>
+<script src="https://www.google-analytics.com/analytics.js" async></script>
+
+
+
+
+
+
+
+
+
+  </body>
+</html>
