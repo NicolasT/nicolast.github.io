@@ -6,6 +6,7 @@ excerpt: >
   change state, and DejaFu to test concurrent code. In this post, we look into how this
   is done, and discuss an approach to simplify the testing effort.
 date: 2023-04-06 20:17 +0100
+last_modified_at: 2023-04-14 21:31 +0200
 categories: "Development"
 header:
   overlay_image: /assets/images/27174457817_7b6cc225e4_c.jpg
@@ -421,4 +422,5 @@ write all kinds of tests later.
   a library is defined in terms of `MonadConc` and `MonadSTM`, but every function
   is `INLINEABLE` and/or `SPECIALIZE`d to `Control.Concurrent.STM.STM` and `IO` so
   there's, ideally, no performance hit for *regular application* consumers of the
-  library vs. using plain `STM` and `IO` in the library code.
+  library vs. using plain `STM` and `IO` in the library code. [Update: [here's the
+  answer]({% post_url 2023-04-14-concurrency-and-performance %})]
