@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out sources
-        uses: actions/checkout@v4.1.1
+        uses: actions/checkout@v4.2.2
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1.161.0
         with:
